@@ -235,17 +235,44 @@ export default function StudentSkillTwinPage() {
                     />
                   </div>
 
+                  {/* Verification Status Badge */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                        skill.verificationStatus === 'Assessment Verified'
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60'
+                          : skill.verificationStatus === 'Evidence Submitted'
+                          ? 'bg-sky-950/80 text-sky-300 border-sky-700/60'
+                          : skill.verificationStatus === 'Certificate Added'
+                          ? 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60'
+                          : 'bg-amber-950/80 text-amber-300 border-amber-700/60'
+                      }`}
+                    >
+                      {skill.verificationStatus === 'Assessment Verified' && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
+                      {skill.verificationStatus === 'Evidence Submitted' && <FileCheck2 className="w-3 h-3 text-sky-400" />}
+                      {skill.verificationStatus === 'Certificate Added' && <Award className="w-3 h-3 text-indigo-400" />}
+                      {skill.verificationStatus === 'Pending Verification' && <Clock className="w-3 h-3 text-amber-400" />}
+                      <span>{skill.verificationStatus}</span>
+                    </span>
+                  </div>
+
                   {/* Evidence Items preview */}
                   <div className="space-y-1.5 my-3">
-                    {skill.evidence.slice(0, 2).map((ev, i) => (
-                      <div key={i} className="flex items-start gap-1.5 text-[11px] text-slate-300 truncate">
-                        {ev.type === 'project' && <Code className="w-3 h-3 text-indigo-400 shrink-0 mt-0.5" />}
-                        {ev.type === 'assessment' && <Award className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />}
-                        {ev.type === 'certification' && <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />}
-                        {ev.type === 'experience' && <Briefcase className="w-3 h-3 text-sky-400 shrink-0 mt-0.5" />}
-                        <span className="truncate">{ev.title}</span>
-                      </div>
-                    ))}
+                    {skill.evidence.length > 0 ? (
+                      skill.evidence.slice(0, 2).map((ev, i) => (
+                        <div key={i} className="flex items-start gap-1.5 text-[11px] text-slate-300 truncate">
+                          {ev.type === 'project' && <Code className="w-3 h-3 text-indigo-400 shrink-0 mt-0.5" />}
+                          {ev.type === 'assessment' && <Award className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />}
+                          {ev.type === 'certification' && <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />}
+                          {ev.type === 'experience' && <Briefcase className="w-3 h-3 text-sky-400 shrink-0 mt-0.5" />}
+                          <span className="truncate">{ev.title}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-[11px] text-amber-400/90 italic">
+                        No verified project evidence • Recommended learning
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -254,7 +281,7 @@ export default function StudentSkillTwinPage() {
                     <Clock className="w-3 h-3" /> {skill.lastUpdated}
                   </span>
                   <span className="text-indigo-400 font-medium group-hover:underline">
-                    {skill.evidenceCount} proofs →
+                    {skill.evidenceCount > 0 ? `${skill.evidenceCount} proofs →` : 'Add Evidence →'}
                   </span>
                 </div>
               </div>
@@ -264,8 +291,8 @@ export default function StudentSkillTwinPage() {
 
         {/* Modal: Full Evidence Inspection */}
         {selectedSkill && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-3xl p-6 space-y-4 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Cpu className="w-5 h-5 text-indigo-400" />
@@ -281,7 +308,7 @@ export default function StudentSkillTwinPage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
                 <div>
                   <p className="text-xs text-slate-400">Current Computed Proficiency</p>
                   <p className="text-2xl font-black text-emerald-400 mt-0.5">
@@ -289,8 +316,8 @@ export default function StudentSkillTwinPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
-                    Category: {selectedSkill.category}
+                  <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 font-semibold">
+                    {selectedSkill.verificationStatus}
                   </span>
                   <p className="text-[11px] text-slate-400 mt-1">Updated {selectedSkill.lastUpdated}</p>
                 </div>
@@ -300,30 +327,41 @@ export default function StudentSkillTwinPage() {
                 <p className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                   Verifiable Evidence Audit ({selectedSkill.evidence.length})
                 </p>
-                <div className="space-y-2 max-h-56 overflow-y-auto">
-                  {selectedSkill.evidence.map((ev, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white">{ev.title}</span>
-                        {ev.score && (
-                          <span className="text-[11px] font-mono font-bold text-emerald-400">
-                            Score: {ev.score}%
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
-                        <span className="capitalize">{ev.type} proof • {ev.date}</span>
-                        {ev.verified ? (
+                {selectedSkill.evidence.length === 0 ? (
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 text-center">
+                    <p className="text-xs text-amber-300 font-semibold">No verified project evidence submitted</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Recommended learning: Complete milestone sprint to earn verified evidence.</p>
+                    <Link
+                      href="/student/roadmap"
+                      onClick={() => setSelectedSkill(null)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs text-indigo-400 hover:underline font-semibold"
+                    >
+                      <span>Open Learning Roadmap</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
+                    {selectedSkill.evidence.map((ev, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-white">{ev.title}</span>
+                          {ev.score && (
+                            <span className="text-[11px] font-mono font-bold text-emerald-400">
+                              Score: {ev.score}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+                          <span className="capitalize">{ev.type} proof • {ev.date}</span>
                           <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                            <CheckCircle2 className="w-3 h-3" /> Verified
+                            <CheckCircle2 className="w-3 h-3" /> {ev.statusText || 'Assessment Verified'}
                           </span>
-                        ) : (
-                          <span className="text-amber-400">Pending Review</span>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex justify-end">

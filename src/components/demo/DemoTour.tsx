@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import {
@@ -12,208 +12,277 @@ import {
   Cpu,
   Target,
   Sliders,
+  MapPin,
   Briefcase,
   Users,
+  MessageSquarePlus,
   Workflow,
+  Award,
+  RefreshCw,
 } from 'lucide-react';
 
+interface TourStep {
+  stepNumber: number;
+  title: string;
+  route: string;
+  targetRole: 'student' | 'industry' | 'faculty' | 'admin';
+  icon: React.ComponentType<{ className?: string }>;
+  tagline: string;
+  description: string;
+  judgeAction: string;
+}
+
 export function DemoTour() {
-  const { isDemoTourOpen, setIsDemoTourOpen, setRole } = useApp();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { isDemoTourOpen, setIsDemoTourOpen, setRole, demoTourStep, setDemoTourStep } = useApp();
   const router = useRouter();
 
   if (!isDemoTourOpen) return null;
 
-  const tourSteps = [
+  const tourSteps: TourStep[] = [
     {
-      title: '1. AI Student Skill Twin',
+      stepNumber: 1,
+      title: 'AI Student Skill Twin',
       route: '/student/skill-twin',
-      targetRole: 'student' as const,
+      targetRole: 'student',
       icon: Cpu,
-      tagline: 'Moving beyond static resume bullet points',
+      tagline: 'Step 1 of 10: Dynamic, Evidence-Grounded Competency Profile',
       description:
-        'Instead of arbitrary self-reported skills, the Skill Twin continuously computes competence from verified GitHub code commits, assessment tests, and course certifications.',
-      keyTakeaway: 'Notice Abdul Aziz has 87% Python & 78% SQL with verifiable evidence records.',
+        'Instead of arbitrary self-reported resume bullet points, SkillBridge AI computes continuous competency from verified GitHub code commits, assessment tests, and course certifications.',
+      judgeAction:
+        'Notice Abdul Aziz has Python (90%) and SQL (82%) marked as "Assessment Verified", while FastAPI (40%) and Docker (30%) are "Pending Verification". Click any skill card to view verified proofs.',
     },
     {
-      title: '2. AI Skill Gap Analysis',
+      stepNumber: 2,
+      title: 'Skill Gap Analysis',
       route: '/student/skill-gap',
-      targetRole: 'student' as const,
+      targetRole: 'student',
       icon: Target,
-      tagline: 'Pinpointing what industry expects vs what student has',
+      tagline: 'Step 2 of 10: Benchmarking Against Real Industry Requirements',
       description:
-        'Benchmarks Abdul against real Backend Developer industry standards. Shows exactly why the 68% score exists and flags FastAPI, REST APIs, Docker, and AWS as critical missing components.',
-      keyTakeaway: 'Translates cold job requirements into explicit, prioritized gap reasons.',
+        'Benchmarks Abdul against real Backend Developer industry standards. Shows exactly why his current 68% readiness exists and isolates critical missing skills (FastAPI, Docker, Cloud).',
+      judgeAction:
+        'Review the qualitative "Why this gap matters" explanations. Employers filter out candidates lacking container and production API evidence.',
     },
     {
-      title: '3. Career Readiness Simulator',
+      stepNumber: 3,
+      title: 'Career Readiness Simulator',
       route: '/student/simulator',
-      targetRole: 'student' as const,
+      targetRole: 'student',
       icon: Sliders,
-      tagline: 'The Killer Demo: Model-based interactive projections',
+      tagline: 'Step 3 of 10: The Killer Demo — Model-Based What-If Projections',
       description:
-        'Students test real "what-if" scenarios. Check off "Learn REST APIs" and "Master FastAPI" to watch live readiness project upwards from 68% to 77%, and up to 91% with an industry capstone.',
-      keyTakeaway: 'Provides the "Recommended Fastest Path" based on highest impact per effort hour.',
+        'Empowers students to simulate the exact impact of learning sprints. Scores are calculated by a deterministic model rather than random shifts.',
+      judgeAction:
+        'Toggle "Learn FastAPI" (+6%) and "Build REST API Project" (+6%) to watch projected readiness climb from 68% to 80%, and up to 91% with Docker and Internship! Note the Fastest Path ROI optimizer.',
     },
     {
-      title: '4. Opportunity Matching & 1-Click Apply',
+      stepNumber: 4,
+      title: 'Personalized Learning Roadmap',
+      route: '/student/roadmap',
+      targetRole: 'student',
+      icon: MapPin,
+      tagline: 'Step 4 of 10: 30-Day Milestone Execution Blueprint',
+      description:
+        'Translates identified deficits into a week-by-week structured curriculum sprint with estimated hours, key deliverables, and direct tie-in to the Skill Twin.',
+      judgeAction:
+        'Click "Mark Complete" on Week 1 (REST APIs) or Week 2 (FastAPI). Notice the completion immediately updates the live Skill Twin and readiness score!',
+    },
+    {
+      stepNumber: 5,
+      title: 'Opportunity Matching & 1-Click Apply',
       route: '/student/opportunities',
-      targetRole: 'student' as const,
+      targetRole: 'student',
       icon: Briefcase,
-      tagline: 'Multi-vector match percentage with clear missing skill alerts',
+      tagline: 'Step 5 of 10: Transparent Match Percentages & Gap Alerts',
       description:
-        'Opportunities show why a student matched (e.g. Razorpay 92% Match) and highlights missing skills so there are no black-box rejections. Applying updates the live application tracker.',
-      keyTakeaway: 'Click "Apply" on Razorpay and check the Applications tracker live.',
+        'Matches students with verified internship openings. Unlike opaque job boards, SkillBridge AI shows both matched competencies and missing skills with 100% transparency.',
+      judgeAction:
+        'Locate the "Backend Engineering Intern @ Razorpay" (91% Match). Click "Apply Now" to submit an application with verified Skill Twin proof.',
     },
     {
-      title: '5. Industry AI Candidate Matcher',
+      stepNumber: 6,
+      title: 'Industry Candidate Matcher',
       route: '/industry/candidates',
-      targetRole: 'industry' as const,
+      targetRole: 'industry',
       icon: Users,
-      tagline: 'Transparent explainable AI: "Why this candidate?"',
+      tagline: 'Step 6 of 10: Explainable AI: "Why This Candidate?"',
       description:
-        'Switching into the Industry persona reveals the recruiter side. Candidates are ranked objectively with verifiable evidence. Click "Why this candidate?" to see the natural language reasoning.',
-      keyTakeaway: 'Recruiters save 80% screening time without relying on biased keyword filters.',
+        'Switching into Industry persona reveals the recruiter side. Candidates are ranked using a transparent 5-factor scoring formula: Skill Compatibility (50%), Assessment (15%), Projects (15%), Experience (10%), Evidence (10%).',
+      judgeAction:
+        'Abdul Aziz is ranked #1 at 91% fit! Click "Why this candidate?" to inspect the transparent explainability breakdown, then click "Shortlist Candidate" to advance him.',
     },
     {
-      title: '6. Closed-Loop Academia Intelligence',
-      route: '/admin/intelligence',
-      targetRole: 'admin' as const,
-      icon: Workflow,
-      tagline: 'Closing the loop: From hiring feedback to institutional reform',
+      stepNumber: 7,
+      title: 'Company Post-Interview Feedback',
+      route: '/industry/feedback',
+      targetRole: 'industry',
+      icon: MessageSquarePlus,
+      tagline: 'Step 7 of 10: Structured Evaluation Feeding Academia',
       description:
-        'Companies submit post-interview evaluations. The system aggregates cohort gaps (e.g. 61% Cloud gap) and prompts Institutional Admins to generate targeted bootcamp interventions.',
-      keyTakeaway: 'Transforms universities from reactive degree mills into proactive talent incubators.',
+        'Recruiters provide granular ratings (REST APIs, Coding, Docker, Communication) after evaluations. Rather than vanishing into an HR database, this feedback feeds directly into academic intelligence.',
+      judgeAction:
+        'Notice Razorpay\'s evaluation for Abdul Aziz: Docker rated 2/5 with note "Needs more hands-on deployment experience." Click "Submit Feedback" to feed into institutional analytics.',
+    },
+    {
+      stepNumber: 8,
+      title: 'Institution Skill Intelligence',
+      route: '/admin/intelligence',
+      targetRole: 'admin',
+      icon: Workflow,
+      tagline: 'Step 8 of 10: Closed-Loop Institutional Intelligence',
+      description:
+        'Aggregates recruiter evaluations across 42 corporate partners. Automatically detects cohort deficits (e.g. Docker 42% gap across 710 CSE students) and maps them to institutional reform.',
+      judgeAction:
+        'Observe how Docker and Cloud emerge as top institutional deficits. This completes the loop from hiring outcomes back into academia!',
+    },
+    {
+      stepNumber: 9,
+      title: 'AI Training Recommendation Engine',
+      route: '/admin/training',
+      targetRole: 'admin',
+      icon: Award,
+      tagline: 'Step 9 of 10: Automated Curriculum Interventions',
+      description:
+        'Synthesizes actionable training programs to bridge detected deficits. Inputs cohort size, industry demand, and partner mentors to produce ready-to-deploy bootcamps.',
+      judgeAction:
+        'See the top recommended intervention: "Docker & Containerization Bootcamp" for 124 students. Click "Deploy Intervention" to approve it and boost projected cohort readiness by +12%!',
+    },
+    {
+      stepNumber: 10,
+      title: 'Closed-Loop Ecosystem Summary',
+      route: '/',
+      targetRole: 'student',
+      icon: RefreshCw,
+      tagline: 'Step 10 of 10: Continuous Academia–Industry Loop',
+      description:
+        'Industry Demand → Skill Intelligence → Student Skill Twin → Skill Gap → Upskilling → Matching → Feedback → Institutional Training → Better Industry Talent.',
+      judgeAction:
+        'You have experienced the complete closed-loop cycle. Feel free to explore any dashboard or test the AI Career Copilot at your own pace!',
     },
   ];
 
-  const step = tourSteps[currentStep];
-  const StepIcon = step.icon;
+  const currentTourStep = tourSteps[demoTourStep] || tourSteps[0];
+  const StepIcon = currentTourStep.icon;
+
+  const navigateToStep = (index: number) => {
+    if (index >= 0 && index < tourSteps.length) {
+      const targetStep = tourSteps[index];
+      setDemoTourStep(index);
+      setRole(targetStep.targetRole);
+      router.push(targetStep.route);
+    }
+  };
 
   const handleNext = () => {
-    if (currentStep < tourSteps.length - 1) {
-      const nextStep = tourSteps[currentStep + 1];
-      setCurrentStep(currentStep + 1);
-      setRole(nextStep.targetRole);
-      router.push(nextStep.route);
+    if (demoTourStep < tourSteps.length - 1) {
+      navigateToStep(demoTourStep + 1);
     } else {
       setIsDemoTourOpen(false);
-      setCurrentStep(0);
     }
   };
 
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      const prevStep = tourSteps[currentStep - 1];
-      setCurrentStep(currentStep - 1);
-      setRole(prevStep.targetRole);
-      router.push(prevStep.route);
+  const handlePrevious = () => {
+    if (demoTourStep > 0) {
+      navigateToStep(demoTourStep - 1);
     }
   };
 
-  const handleJumpToStep = (index: number) => {
-    const target = tourSteps[index];
-    setCurrentStep(index);
-    setRole(target.targetRole);
-    router.push(target.route);
+  const handleSkip = () => {
+    setIsDemoTourOpen(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-950 border border-emerald-700/50">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm transition-all animate-fadeIn">
+      <div className="w-full max-w-2xl bg-slate-900 border-2 border-indigo-500/80 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-indigo-950/80 text-slate-100 relative overflow-hidden">
+        {/* Glow Header */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Top Header */}
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/40">
+              <StepIcon className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-white tracking-wide uppercase">
-                SIH26044 Prototype Walkthrough
-              </span>
-              <p className="text-[11px] text-slate-400">Step {currentStep + 1} of {tourSteps.length}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono uppercase bg-indigo-950/90 text-indigo-300 border border-indigo-700/60 px-2 py-0.5 rounded font-bold">
+                  SIH26044 Demo Tour
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-400">
+                  {demoTourStep + 1} / {tourSteps.length}
+                </span>
+              </div>
+              <h3 className="text-lg font-extrabold text-white mt-0.5">
+                {currentTourStep.title}
+              </h3>
             </div>
           </div>
+
           <button
-            onClick={() => setIsDemoTourOpen(false)}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            onClick={handleSkip}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            title="Close Tour"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Step Progress indicators */}
-        <div className="flex px-6 pt-4 gap-1.5">
-          {tourSteps.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => handleJumpToStep(i)}
-              className={`h-1.5 flex-1 rounded-full transition-all ${
-                i === currentStep
-                  ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50'
-                  : i < currentStep
-                  ? 'bg-indigo-600'
-                  : 'bg-slate-800'
-              }`}
-            />
-          ))}
+        {/* Progress Bar */}
+        <div className="w-full bg-slate-800 h-1.5 rounded-full mb-4 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+            style={{ width: `${((demoTourStep + 1) / tourSteps.length) * 100}%` }}
+          />
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 space-y-4">
-          <div className="flex items-start gap-3.5">
-            <div className="p-2.5 rounded-xl bg-indigo-950/80 border border-indigo-700/60 shrink-0">
-              <StepIcon className="w-6 h-6 text-indigo-400" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white tracking-tight">
-                {step.title}
-              </h3>
-              <p className="text-xs font-medium text-emerald-400 mt-0.5">
-                {step.tagline}
-              </p>
-            </div>
-          </div>
+        {/* Tagline */}
+        <p className="text-xs font-semibold text-indigo-300 mb-2">
+          {currentTourStep.tagline}
+        </p>
 
-          <p className="text-xs text-slate-300 leading-relaxed">
-            {step.description}
+        {/* Content */}
+        <div className="space-y-3">
+          <p className="text-sm text-slate-300 leading-relaxed">
+            {currentTourStep.description}
           </p>
 
-          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-start gap-2.5">
+          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-emerald-800/40 text-xs text-emerald-200 flex items-start gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div className="text-[11px] text-slate-300">
-              <strong className="text-white">Judge Tip: </strong>
-              {step.keyTakeaway}
+            <div>
+              <span className="font-bold text-emerald-300 uppercase tracking-wide block text-[10px] mb-0.5">
+                Recommended Action for Evaluators:
+              </span>
+              <span>{currentTourStep.judgeAction}</span>
             </div>
           </div>
         </div>
 
-        {/* Actions Footer */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+        {/* Footer Navigation */}
+        <div className="flex items-center justify-between pt-5 mt-5 border-t border-slate-800/80">
           <button
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            onClick={handleSkip}
+            className="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Previous</span>
+            Skip Tour
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setIsDemoTourOpen(false);
-                setCurrentStep(0);
-              }}
-              className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white"
-            >
-              Skip Tour
-            </button>
+          <div className="flex items-center gap-2.5">
+            {demoTourStep > 0 && (
+              <button
+                onClick={handlePrevious}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Previous</span>
+              </button>
+            )}
+
             <button
               onClick={handleNext}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-all shadow-md shadow-emerald-500/20"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
             >
-              <span>{currentStep === tourSteps.length - 1 ? 'Finish Tour' : 'Next Step'}</span>
+              <span>{demoTourStep === tourSteps.length - 1 ? 'Finish Tour' : 'Next Step'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function TrainingEnginePage() {
-  const { trainingRecommendations, generateNewTrainingPlan } = useApp();
+  const { trainingRecommendations, generateNewTrainingPlan, deployTrainingIntervention } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState('Cloud Computing (AWS/GCP)');
   const [selectedCohort, setSelectedCohort] = useState('CSE & IT 3rd Year');
@@ -129,11 +129,16 @@ export default function TrainingEnginePage() {
 
                   <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
                     <p className="text-[10px] text-emerald-400 uppercase font-semibold">
-                      Recommended Action
+                      Recommended Action & Format
                     </p>
                     <p className="text-emerald-200 font-medium leading-relaxed">
                       {tr.recommendedAction}
                     </p>
+                    <div className="pt-2 mt-2 border-t border-slate-900 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
+                      <span>Format: <strong className="text-white">{tr.suggestedFormat || 'Hands-on intensive lab'}</strong></span>
+                      <span>Mentor: <strong className="text-amber-300">{tr.industryMentor || 'Corporate Engineering Team'}</strong></span>
+                      <span>Target Students: <strong className="text-white">{tr.enrolledCount || 124}</strong></span>
+                    </div>
                   </div>
                 </div>
 
@@ -141,17 +146,32 @@ export default function TrainingEnginePage() {
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5 text-slate-500" />
-                      Target: <strong className="text-white">{tr.targetCohorts.join(', ')}</strong>
+                      Target Cohorts: <strong className="text-white">{tr.targetCohorts.join(', ')}</strong>
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
-                      Duration: {tr.durationWeeks} Weeks
+                      Duration: {tr.durationWeeks} {tr.durationWeeks === 1 ? 'Week (5 Days)' : 'Weeks'}
                     </span>
                   </div>
 
-                  <span className="text-[11px] text-slate-500">
-                    Curriculum impact calibrated against NIRF & AICTE metrics
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-slate-500 hidden sm:inline">
+                      Curriculum impact calibrated against NIRF & AICTE metrics
+                    </span>
+                    {tr.status === 'Proposed' ? (
+                      <button
+                        onClick={() => deployTrainingIntervention(tr.id)}
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Deploy Intervention</span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-mono text-emerald-300 bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-800/80 flex items-center gap-1 font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Active Intervention (+{tr.projectedReadinessBoost}%)
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

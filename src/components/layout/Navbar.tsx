@@ -126,7 +126,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 rounded-lg hover:bg-emerald-900/40 hover:border-emerald-500 transition-all shadow-sm"
           >
             <Play className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
-            <span>Judge Demo Tour</span>
+            <span>5-Minute Demo Tour</span>
           </button>
 
           {/* AI Career Assistant Shortcut */}

@@ -223,6 +223,24 @@ PROJECTS:
                     </div>
                   </div>
 
+                  {/* Missing for Backend Developer Callout */}
+                  <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-800/60">
+                    <p className="text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                      Missing for Backend Developer Target Role:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['FastAPI', 'Docker', 'Cloud (AWS)', 'System Design', 'Testing'].map((gap) => (
+                        <span key={gap} className="text-xs px-2.5 py-1 rounded-lg bg-amber-950/80 text-amber-300 border border-amber-800/80 font-mono flex items-center gap-1 font-semibold">
+                          <span className="text-rose-400">✗</span> {gap}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-2">
+                      Pipeline: <span className="text-white font-mono">Resume → Skill Twin → Gap Diagnostic → 30-Day Roadmap</span>
+                    </p>
+                  </div>
+
                   {syncedSuccess && (
                     <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-700/60 flex items-center gap-2 text-xs text-emerald-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

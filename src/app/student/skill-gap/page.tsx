@@ -24,7 +24,7 @@ export default function SkillGapPage() {
   const [selectedRole, setSelectedRole] = useState(student.targetRole || 'Backend Developer');
 
   const gapAnalysis = calculateSkillGap(student.skills, selectedRole);
-  const benchmark = TARGET_ROLE_BENCHMARKS.find((b) => b.role === selectedRole) || TARGET_ROLE_BENCHMARKS[0];
+  const benchmark = TARGET_ROLE_BENCHMARKS[selectedRole] || TARGET_ROLE_BENCHMARKS['Backend Developer'];
 
   return (
     <AppShell>
@@ -63,7 +63,7 @@ export default function SkillGapPage() {
 
         {/* Role Selector Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {TARGET_ROLE_BENCHMARKS.map((bm) => (
+          {Object.values(TARGET_ROLE_BENCHMARKS).map((bm) => (
             <button
               key={bm.role}
               onClick={() => setSelectedRole(bm.role)}

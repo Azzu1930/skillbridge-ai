@@ -12,6 +12,12 @@ export interface User {
   title?: string;
 }
 
+export type VerificationLabel =
+  | 'Assessment Verified'
+  | 'Evidence Submitted'
+  | 'Certificate Added'
+  | 'Pending Verification';
+
 export interface SkillEvidenceItem {
   type: 'project' | 'assessment' | 'certification' | 'experience';
   title: string;
@@ -19,6 +25,7 @@ export interface SkillEvidenceItem {
   date: string;
   issuerOrRepo?: string;
   verified: boolean;
+  statusText?: VerificationLabel;
 }
 
 export interface StudentSkill {
@@ -27,9 +34,11 @@ export interface StudentSkill {
   category: 'technical' | 'soft' | 'tool' | 'domain';
   score: number; // 0 - 100
   verified: boolean;
+  verificationStatus: VerificationLabel;
   lastUpdated: string;
   evidenceCount: number;
   evidence: SkillEvidenceItem[];
+  targetScore?: number;
 }
 
 export interface StudentProfile {
@@ -68,6 +77,7 @@ export interface StudentProfile {
     issuer: string;
     date: string;
     verified: boolean;
+    verificationStatus?: VerificationLabel;
   }[];
   internships: {
     role: string;
@@ -108,6 +118,7 @@ export interface SimulatorAction {
   effortWeeks: number;
   priority: 'High' | 'Medium' | 'Low';
   completed: boolean;
+  learningResource?: string;
 }
 
 export interface RoadmapMilestone {
@@ -155,11 +166,12 @@ export interface ApplicationItem {
 
 export interface IndustrySkillDemandItem {
   skill: string;
-  growth: number; // percentage growth e.g. +32%
+  growth: number; // percentage growth e.g. +42%
   demandCount: number;
   trend: 'up' | 'stable' | 'down';
   category: string;
   topRoles: string[];
+  shortageSeverity: 'Critical' | 'Moderate' | 'Balanced';
 }
 
 export interface CandidateEvaluation {
@@ -168,13 +180,20 @@ export interface CandidateEvaluation {
   email: string;
   avatar: string;
   role: string;
-  matchScore: number;
+  matchScore: number; // 0-100 overall weighted
   readinessScore: number;
   matchedSkills: string[];
   missingSkills: string[];
   experienceYears: number;
   projectsCount: number;
   assessmentScore: number;
+  scoreBreakdown: {
+    skillCompatibility: number; // out of 50
+    assessmentPerformance: number; // out of 15
+    projectRelevance: number; // out of 15
+    experience: number; // out of 10
+    evidenceStrength: number; // out of 10
+  };
   explanation: {
     skillMatchRatio: string;
     projectEvidence: string;
@@ -187,14 +206,15 @@ export interface CompanyFeedbackRecord {
   id: string;
   company: string;
   studentName: string;
+  studentId?: string;
   role: string;
-  technicalRating: number; // 1-5
-  communicationRating: number;
-  problemSolvingRating: number;
-  domainKnowledgeRating: number;
-  interviewPerformance: number;
-  projectReadiness: number;
+  restApiRating: number; // 1-5
+  codingRating: number; // 1-5
+  communicationRating: number; // 1-5
+  problemSolvingRating: number; // 1-5
+  dockerRating: number; // 1-5
   qualitativeComments: string;
+  detectedGaps: string[];
   date: string;
 }
 
@@ -205,8 +225,11 @@ export interface TrainingRecommendationItem {
   reason: string;
   recommendedAction: string;
   targetCohorts: string[];
-  projectedReadinessBoost: number;
+  enrolledCount: number;
   durationWeeks: number;
+  projectedReadinessBoost: number;
+  suggestedFormat: string;
+  industryMentor: string;
   status: 'Proposed' | 'Approved' | 'In Progress' | 'Completed';
 }
 

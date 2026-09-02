@@ -7,7 +7,7 @@ import {
   StudentProfile,
   TrainingRecommendationItem,
 } from '@/types';
-import { TARGET_ROLE_BENCHMARKS, SIMULATOR_ACTIONS } from '@/data/seedData';
+import { TARGET_ROLE_BENCHMARKS } from '@/data/seedData';
 
 export function calculateSkillGap(
   studentSkills: StudentSkill[],
@@ -22,8 +22,8 @@ export function calculateSkillGap(
   primaryGaps: string[];
 } {
   const benchmark =
-    TARGET_ROLE_BENCHMARKS.find((b) => b.role === roleName) ||
-    TARGET_ROLE_BENCHMARKS[0];
+    TARGET_ROLE_BENCHMARKS[roleName] ||
+    TARGET_ROLE_BENCHMARKS['Backend Developer'];
 
   const studentSkillMap = new Map<string, number>();
   studentSkills.forEach((s) => {
@@ -57,17 +57,17 @@ export function calculateSkillGap(
 
     if (currentScore >= req.targetScore * 0.85) {
       status = 'Acquired';
-      gapReason = `Proficiency meets or exceeds industry requirements (${currentScore}% vs ${req.targetScore}% target).`;
-      recommendedAction = 'Maintain with active portfolio projects and peer reviews.';
+      gapReason = `Proficiency meets industry benchmark (${currentScore}% vs ${req.targetScore}% target). Verified evidence on record.`;
+      recommendedAction = 'Maintain with active portfolio project commits and code reviews.';
     } else if (currentScore > 0) {
       status = 'In Progress';
-      gapReason = `Foundational understanding exists (${currentScore}%), but enterprise depth (${req.targetScore}%) is required.`;
+      gapReason = `Foundational understanding exists (${currentScore}%), but production depth (${req.targetScore}%) is expected.`;
       recommendedAction = `Target structured advanced assessment and benchmark projects in ${req.skill}.`;
       primaryGaps.push(req.skill);
     } else {
       status = 'Missing';
-      gapReason = `Critical deficit for ${roleName}. Employers filter out candidates without demonstrable ${req.skill} evidence.`;
-      recommendedAction = `Prioritize 2-week intensive learning sprint and build a dedicated capstone module for ${req.skill}.`;
+      gapReason = `Critical gap for ${roleName}. Corporate evaluations reject candidates lacking ${req.skill} evidence.`;
+      recommendedAction = `Prioritize 2-week intensive learning sprint and build a dedicated project for ${req.skill}.`;
       primaryGaps.push(req.skill);
     }
 
@@ -135,7 +135,7 @@ export function extractSkillsFromResume(text: string): {
     'Python', 'FastAPI', 'REST APIs', 'SQL', 'PostgreSQL', 'Docker',
     'Kubernetes', 'JavaScript', 'TypeScript', 'React', 'Next.js',
     'HTML', 'CSS', 'Git', 'Redis', 'AWS', 'Linux', 'DSA',
-    'Problem Solving', 'Communication', 'Pandas', 'Machine Learning'
+    'Problem Solving', 'Communication', 'Pandas', 'Machine Learning', 'Testing', 'System Design'
   ];
 
   const detected = skillPool.filter((s) => lower.includes(s.toLowerCase()));
@@ -145,11 +145,63 @@ export function extractSkillsFromResume(text: string): {
   );
 
   return {
-    detectedSkills: detected.length > 0 ? detected : ['Python', 'SQL', 'Git', 'React', 'HTML', 'CSS'],
+    detectedSkills: detected.length > 0 ? detected : ['Python', 'SQL', 'Git', 'HTML', 'CSS', 'JavaScript'],
     detectedProjectSkills: projectSkills.length > 0 ? projectSkills : ['REST APIs', 'PostgreSQL', 'Authentication'],
     education: 'B.Tech in Computer Science & Engineering, NIT (CGPA: 8.74)',
     experienceYears: 0.5,
     confidenceScore: 94,
+  };
+}
+
+export function calculateCandidateMatchScore(
+  student: StudentProfile,
+  requiredSkills: string[]
+): {
+  matchScore: number;
+  scoreBreakdown: {
+    skillCompatibility: number;
+    assessmentPerformance: number;
+    projectRelevance: number;
+    experience: number;
+    evidenceStrength: number;
+  };
+  matchedSkills: string[];
+  missingSkills: string[];
+} {
+  const studentSkillNames = new Set(student.skills.map((s) => s.name.toLowerCase()));
+  const matched = requiredSkills.filter((r) => studentSkillNames.has(r.toLowerCase()));
+  const missing = requiredSkills.filter((r) => !studentSkillNames.has(r.toLowerCase()));
+
+  // 1. Skill compatibility (max 50)
+  const skillRatio = requiredSkills.length > 0 ? matched.length / requiredSkills.length : 0.8;
+  const skillCompatibility = Math.round(skillRatio * 50);
+
+  // 2. Assessment performance (max 15)
+  const assessmentPerformance = Math.round((student.technicalScore / 100) * 15);
+
+  // 3. Project relevance (max 15)
+  const projectRelevance = Math.round((student.projectScore / 100) * 15);
+
+  // 4. Experience (max 10)
+  const experience = 8;
+
+  // 5. Evidence strength (max 10)
+  const verifiedCount = student.skills.filter((s) => s.verified).length;
+  const evidenceStrength = Math.min(10, Math.round((verifiedCount / 5) * 10));
+
+  const total = skillCompatibility + assessmentPerformance + projectRelevance + experience + evidenceStrength;
+
+  return {
+    matchScore: Math.min(99, Math.max(50, total)),
+    scoreBreakdown: {
+      skillCompatibility,
+      assessmentPerformance,
+      projectRelevance,
+      experience,
+      evidenceStrength,
+    },
+    matchedSkills: matched,
+    missingSkills: missing,
   };
 }
 
@@ -159,72 +211,92 @@ export function generateAssistantResponse(
 ): string {
   const query = prompt.toLowerCase();
 
-  if (query.includes('learn next') || query.includes('what should i learn')) {
-    return `Based on your **AI Skill Twin** and target role of **${profile.targetRole}** (current readiness: ${profile.readinessScore}%):
-
-1. **High Priority: FastAPI & REST APIs**: You have strong Python (87%) and SQL (78%), but missing production web framework evidence. Spend 2 weeks building an asynchronous microservice.
-2. **Medium Priority: Docker Containerization**: Packaging your current Task Queue project in a multi-stage Docker container will bridge a 54% cohort gap.
-3. **Database Tuning**: Practice indexed queries with PostgreSQL EXPLAIN ANALYZE to reach enterprise readiness.
-
-Would you like me to map these into your active **Simulator** or update your **6-Week Roadmap**?`;
-  }
-
-  if (query.includes('readiness low') || query.includes('why is my readiness')) {
-    return `Your current readiness is **${profile.readinessScore}%** because our multi-vector evaluation evaluates 4 critical dimensions:
-- **Technical Knowledge (82%)**: Solid foundation in Python and SQL fundamentals.
-- **Project Evidence (76%)**: Good personal projects, but lacking containerized and cloud-deployed live instances.
-- **Interview Readiness (68%)**: Need practice with distributed systems trade-offs and live system design questions.
-- **Role Alignment Gap**: Missing **FastAPI, Docker, and Cloud AWS** which are demanded by 84% of backend listings.
-
-Activating just 2 actions in the **Readiness Simulator** will lift your projection to **77%**!`;
-  }
-
-  if (query.includes('internship') || query.includes('apply for') || query.includes('opportunities')) {
-    return `Here are the top matches from our 684 active opportunities mapped to your Skill Twin:
-
-1. **Backend Developer Intern @ Razorpay** — **92% Match**
-   - Matched: Python (87%), SQL (78%), Git (72%), Problem Solving (81%)
-   - Suggested Action: Apply immediately; mention your Redis task queue project.
-2. **API Infrastructure Intern @ Zomato** — **78% Match**
-   - High scale backend work; brush up on Redis and container basics.
-3. **Microsoft Live Industry Capstone** — **94% Match**
-   - Perfect for gaining corporate-backed evidence with a ₹25,000 stipend grant.`;
-  }
-
-  if (query.includes('missing') || query.includes('skills am i missing') || query.includes('backend')) {
-    return `For **Backend Developer**, your verified assets and missing industry requirements are:
+  if (query.includes('missing') || query.includes('skills am i missing') || query.includes('backend developer')) {
+    return `For **Backend Developer** at Tier-1 companies (like Razorpay and Zomato), your current Skill Twin analysis reveals:
 
 - **Verified Strengths**:
-  - Python (87% - Assessment & Project proven)
-  - SQL & Relational Queries (78%)
-  - Problem Solving (81%)
+  - Python (90% - Assessment & Project proven)
+  - SQL & Relational Schema (82% - Assessment verified)
+  - Algorithmic Problem Solving (84%)
   - Git Version Control (72%)
 
-- **Key Missing Skills**:
-  - **FastAPI** (Weight: High, Target: 80%) — Missing
-  - **REST API Standards** (Weight: High, Target: 85%) — In Progress
-  - **Docker** (Weight: Medium, Target: 75%) — Missing
-  - **Cloud AWS/GCP** (Weight: Medium, Target: 70%) — Missing
+- **Critical Skill Gaps**:
+  - **FastAPI** (Current: 40%, Target: 80%) — Missing async microservice evidence
+  - **REST APIs** (Current: 45%, Target: 85%) — Needs OpenAPI specs & idempotency
+  - **Docker** (Current: 30%, Target: 75%) — Flagged in 42 corporate interview evaluations
+  - **Cloud (AWS/GCP)** (Current: 25%, Target: 70%) — Lacks live deployed endpoints
 
-Closing these 4 specific gaps will raise your readiness from 68% to 91%.`;
+Closing these 4 specific competencies in the **Career Simulator** will lift your readiness from 68% to 91%.`;
   }
 
-  if (query.includes('improve my profile') || query.includes('portfolio')) {
-    return `To elevate your profile for hiring managers at top tech firms:
+  if (query.includes('which internship') || query.includes('apply') || query.includes('opportunity')) {
+    return `Based on your live profile and 68% readiness, here are your optimal matches:
 
-1. **Verify Your Credentials**: You have 3 verified certifications; complete the interactive **Assessment** module to verify your Problem Solving score.
-2. **Deploy Your Task Queue**: Provide a live Swagger/OpenAPI URL for your task engine on your **Digital Portfolio**.
-3. **Upload an Updated Resume**: Run our **Resume Analyzer** to auto-sync detected technologies into your AI Skill Twin.
-4. **Acquire Industry Project Evidence**: Apply for the Microsoft Capstone to earn an industry-backed verification badge.`;
+1. **Backend Developer Intern @ Razorpay Software** — **87% - 91% Match**
+   - **Why Matched**: Strong Python (90%) and SQL (82%) with verified repository commits.
+   - **Gap to Close**: Docker & FastAPI.
+   - **Recommendation**: Apply directly; tech recruiters prioritize candidates with verified test evidence!
+
+2. **Junior Software Engineer @ TCS Digital Labs** — **84% Match**
+   - Solid foundation in algorithms; minimum readiness requirement is 65%.
+
+3. **API Infrastructure Intern @ Zomato** — **78% Match**
+   - Great learning ground for high-throughput concurrency.`;
   }
 
-  // Fallback intelligent general response
-  return `Hello Abdul! I have synchronized your current **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
+  if (query.includes('improve my readiness') || query.includes('how can i improve')) {
+    return `To systematically climb from **68% to 91%** placement readiness:
+
+1. **Complete Action 1: Learn FastAPI & Pydantic** (+6% $\\to$ 74%)
+2. **Complete Action 2: Build REST API Project with Auth & DB** (+6% $\\to$ 80%)
+3. **Complete Action 3: Learn Docker Containerization** (+4% $\\to$ 84%)
+4. **Complete Action 4: Cloud Fundamentals** (+3% $\\to$ 87%)
+5. **Complete Action 5: Backend Internship / Capstone** (+4% $\\to$ 91%)
+
+You can test these interactive toggles right now in the **Career Readiness Simulator**!`;
+  }
+
+  if (query.includes('30-day') || query.includes('learning plan') || query.includes('roadmap')) {
+    return `Here is your customized **30-Day Backend Acceleration Plan**:
+
+- **Week 1**: REST API Fundamentals, HTTP status codes, and OpenAPI 3.0 specs.
+- **Week 2**: Asynchronous microservices with FastAPI and Pydantic validation.
+- **Week 3**: PostgreSQL schema design, indexing, and JWT authentication.
+- **Week 4**: Multi-stage Docker containerization and Compose orchestration.
+
+Checking off tasks in your **Learning Roadmap** automatically synchronizes with your **AI Skill Twin**!`;
+  }
+
+  if (query.includes('why did i get') || query.includes('match') || query.includes('87%')) {
+    return `Your **87% Match with Razorpay Backend Intern** is calculated using our transparent 5-factor matching formula:
+
+- **Skill Compatibility (44/50)**: Strong match on Python, SQL, and Git; missing FastAPI and Docker.
+- **Assessment Performance (13/15)**: Python test (91%) and Problem Solving (84%).
+- **Project Relevance (13/15)**: Expense Analytics micro-ledger proves query optimization.
+- **Experience (8/10)**: 6 months of verified academic trainee work.
+- **Evidence Strength (9/10)**: High ratio of assessment-verified skills.
+
+Total: **87/100 (High Fit Recommendation)**.`;
+  }
+
+  if (query.includes('project') || query.includes('build next')) {
+    return `The single most impactful project you should build right now is:
+
+**"Containerized FastAPI Microservice with PostgreSQL & Redis"**
+- **Architecture**: Async Python 3.11, FastAPI endpoints, Pydantic v2 validation.
+- **Database**: PostgreSQL with connection pooling and automated Alembic migrations.
+- **DevOps**: Multi-stage Dockerfile deployed with Docker Compose.
+- **Target Impact**: Bridges both your FastAPI (+6%) and Docker (+4%) deficits simultaneously!`;
+  }
+
+  // Fallback
+  return `Hello Abdul! I am your **SkillBridge Career Copilot**, grounded in your verified **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
 
 You can ask me:
-- *"What should I learn next to improve readiness?"*
-- *"Why is my readiness score at 68%?"*
-- *"Which internships should I apply for right now?"*
-- *"What skills am I missing for backend engineering?"*
-- *"How can I improve my digital portfolio for recruiters?"*`;
+- *"What skills am I missing for Backend Developer?"*
+- *"Which internship should I apply for?"*
+- *"How can I improve my readiness?"*
+- *"Create my 30-day learning plan."*
+- *"Why did I get an 87% opportunity match?"*
+- *"Which project should I build next?"*`;
 }

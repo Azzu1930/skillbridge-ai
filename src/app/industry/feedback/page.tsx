@@ -13,32 +13,45 @@ import {
   ArrowRight,
   ShieldCheck,
   UserCheck,
+  Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function CompanyFeedbackPage() {
-  const { student, companyFeedbacks, addCompanyFeedback } = useApp();
+  const { student, companyFeedbacks, submitIndustryFeedback } = useApp();
 
   const [formData, setFormData] = useState({
     company: 'Razorpay Software',
-    studentName: student.name,
-    role: 'Backend Developer Track',
-    technicalRating: 4.5,
-    communicationRating: 4.0,
-    problemSolvingRating: 4.5,
-    domainKnowledgeRating: 4.0,
-    interviewPerformance: 4.5,
-    projectReadiness: 4.2,
+    studentName: 'Abdul Aziz',
+    role: 'Backend Intern',
+    restApiRating: 3,
+    codingRating: 4,
+    communicationRating: 3,
+    problemSolvingRating: 4,
+    dockerRating: 2,
     qualitativeComments:
-      'Candidate has exceptional grasp of asynchronous concurrency in Python and task queue workers. Needs 2 weeks of hands-on exposure to production FastAPI schemas and Docker container orchestration before production deployment.',
+      'Solid algorithmic foundation in Python and query optimization. Needs more hands-on deployment experience with Docker containerization and CI/CD pipelines.',
+    detectedGaps: ['Docker', 'Cloud Deployment'],
   });
 
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addCompanyFeedback(formData);
+    submitIndustryFeedback({
+      company: formData.company,
+      studentName: formData.studentName,
+      role: formData.role,
+      restApiRating: formData.restApiRating,
+      codingRating: formData.codingRating,
+      communicationRating: formData.communicationRating,
+      problemSolvingRating: formData.problemSolvingRating,
+      dockerRating: formData.dockerRating,
+      qualitativeComments: formData.qualitativeComments,
+      detectedGaps: formData.detectedGaps,
+    });
     setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
+    setTimeout(() => setSubmitted(false), 5000);
   };
 
   return (
@@ -60,7 +73,7 @@ export default function CompanyFeedbackPage() {
                 Corporate Evaluation & Feedback
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Post-interview and internship evaluations submitted here feed directly into institutional analytics, triggering curriculum adjustments and university training bootcamps.
+                Post-interview and internship evaluations submitted here feed directly into institutional analytics, updating student cohort skill gaps and triggering academic training recommendations.
               </p>
             </div>
 
@@ -86,17 +99,17 @@ export default function CompanyFeedbackPage() {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-amber-400" />
-                Candidate Evaluation Form
+                Post-Interview Evaluation Form
               </h2>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                Verified Recruiter
+                Verified Recruiter • Razorpay
               </span>
             </div>
 
             {submitted && (
-              <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-700 text-xs font-semibold text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Feedback submitted! Closed-loop institutional curriculum recommendations updated.</span>
+              <div className="p-4 rounded-2xl bg-emerald-950/90 border border-emerald-700 text-xs font-bold text-emerald-200 flex items-center gap-2.5 shadow-lg">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>Feedback successfully added to Academia Intelligence!</span>
               </div>
             )}
 
@@ -105,112 +118,212 @@ export default function CompanyFeedbackPage() {
                 <label className="block text-xs font-medium text-slate-400 mb-1">Company</label>
                 <input
                   type="text"
-                  required
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-amber-500 focus:outline-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Candidate</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Candidate Evaluated</label>
                 <input
                   type="text"
-                  required
                   value={formData.studentName}
                   onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-amber-500 focus:outline-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
 
-            {/* Rating Sliders */}
-            <div className="space-y-3 pt-2">
-              {[
-                { label: 'Technical Core Skills', key: 'technicalRating' },
-                { label: 'Communication & Review', key: 'communicationRating' },
-                { label: 'Algorithmic Problem Solving', key: 'problemSolvingRating' },
-                { label: 'Domain & Architecture Knowledge', key: 'domainKnowledgeRating' },
-                { label: 'Interview Coding Performance', key: 'interviewPerformance' },
-                { label: 'Production Project Readiness', key: 'projectReadiness' },
-              ].map((item) => (
-                <div key={item.key} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-300 font-medium">{item.label}</span>
-                    <span className="text-amber-400 font-mono font-bold">
-                      {(formData as any)[item.key]} / 5.0
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1.0"
-                    max="5.0"
-                    step="0.1"
-                    value={(formData as any)[item.key]}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [item.key]: parseFloat(e.target.value) })
-                    }
-                    className="w-full accent-amber-400 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <label className="block text-xs font-medium text-slate-400 mb-1">
-                Qualitative Feedback for Academia & Candidate
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={formData.qualitativeComments}
-                onChange={(e) => setFormData({ ...formData, qualitativeComments: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-amber-500 focus:outline-none"
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Role Evaluated</label>
+              <input
+                type="text"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">Feeds /admin/intelligence model</span>
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-md shadow-amber-500/20 flex items-center gap-1.5"
-              >
-                <span>Submit Evaluation</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+            {/* Granular 1-5 Ratings */}
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3">
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+                Technical Competency Ratings (1 to 5 Stars)
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* REST API */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-300">REST API knowledge</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setFormData({ ...formData, restApiRating: star })}
+                        className={`text-sm ${star <= formData.restApiRating ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] font-mono text-amber-400 font-bold">{formData.restApiRating}/5</span>
+                  </div>
+                </div>
+
+                {/* Coding */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-300">Coding / Python</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setFormData({ ...formData, codingRating: star })}
+                        className={`text-sm ${star <= formData.codingRating ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] font-mono text-amber-400 font-bold">{formData.codingRating}/5</span>
+                  </div>
+                </div>
+
+                {/* Communication */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-300">Communication</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setFormData({ ...formData, communicationRating: star })}
+                        className={`text-sm ${star <= formData.communicationRating ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] font-mono text-amber-400 font-bold">{formData.communicationRating}/5</span>
+                  </div>
+                </div>
+
+                {/* Problem Solving */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-300">Problem Solving</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setFormData({ ...formData, problemSolvingRating: star })}
+                        className={`text-sm ${star <= formData.problemSolvingRating ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] font-mono text-amber-400 font-bold">{formData.problemSolvingRating}/5</span>
+                  </div>
+                </div>
+
+                {/* Docker */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800 sm:col-span-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-300 font-medium">Docker / Containers</span>
+                    <span className="text-[10px] text-rose-400 bg-rose-950 px-1.5 py-0.2 rounded font-mono">Flagged Deficit</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setFormData({ ...formData, dockerRating: star })}
+                        className={`text-sm ${star <= formData.dockerRating ? 'text-amber-400' : 'text-slate-700'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-1 text-[11px] font-mono text-rose-400 font-bold">{formData.dockerRating}/5</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">
+                Additional Qualitative Feedback
+              </label>
+              <textarea
+                rows={3}
+                value={formData.qualitativeComments}
+                onChange={(e) => setFormData({ ...formData, qualitativeComments: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 font-sans"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Submit Feedback to Academia Intelligence</span>
+            </button>
           </form>
 
-          {/* Historical Feedback Records Log */}
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-md space-y-4">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Recent Partner Evaluations ({companyFeedbacks.length})
-            </h2>
+          {/* Right: Live Aggregated Feedback Stream */}
+          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-md space-y-4 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Workflow className="w-4 h-4 text-purple-400" />
+                  Recent Corporate Evaluations (42 Total)
+                </h2>
+                <span className="text-xs font-mono text-purple-400">Live Stream</span>
+              </div>
 
-            <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {companyFeedbacks.map((fb) => (
-                <div
-                  key={fb.id}
-                  className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-white">{fb.company}</span>
-                      <p className="text-[11px] text-indigo-400">{fb.studentName} • {fb.role}</p>
+              <div className="space-y-3 mt-4">
+                {companyFeedbacks.map((fb) => (
+                  <div
+                    key={fb.id}
+                    className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="font-bold text-xs text-white block">{fb.studentName}</span>
+                        <span className="text-[11px] text-amber-400">{fb.company} • {fb.role}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono">{fb.date}</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs font-mono font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
-                        Avg: {((fb.technicalRating + fb.problemSolvingRating + fb.interviewPerformance) / 3).toFixed(1)} / 5
+
+                    <div className="flex flex-wrap gap-2 text-[10px] font-mono text-slate-300">
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        REST APIs: <strong className="text-white">{fb.restApiRating}/5</strong>
                       </span>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{fb.date}</p>
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        Coding: <strong className="text-white">{fb.codingRating}/5</strong>
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        Communication: <strong className="text-white">{fb.communicationRating}/5</strong>
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                        Docker: <strong className="text-rose-400">{fb.dockerRating}/5</strong>
+                      </span>
                     </div>
-                  </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed italic bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/60">
-                    &quot;{fb.qualitativeComments}&quot;
-                  </p>
-                </div>
-              ))}
+                    <p className="text-xs text-slate-300 italic bg-slate-900/60 p-2.5 rounded-lg border border-slate-850">
+                      &quot;{fb.qualitativeComments}&quot;
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400">Next Action:</span>
+              <Link
+                href="/admin/training"
+                className="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
+              >
+                <span>Inspect AI Training Planner →</span>
+              </Link>
             </div>
           </div>
         </div>
