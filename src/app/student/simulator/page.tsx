@@ -34,7 +34,7 @@ export default function CareerReadinessSimulatorPage() {
                   <Sliders className="w-4 h-4" />
                 </span>
                 <span className="text-xs font-mono uppercase tracking-wider text-blue-700 font-bold">
-                  SIH26044 What-If Simulator
+                  Career Intelligence Simulator
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">

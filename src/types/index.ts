@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'industry' | 'faculty' | 'admin';
+export type UserRole = 'student' | 'industry' | 'faculty' | 'institution' | 'admin';
 
 export interface User {
   id: string;
@@ -331,8 +331,37 @@ export interface UserAccount {
   email: string;
   passwordHash: string;
   salt: string;
-  targetRole?: string;
+  role: UserRole;
+  avatar?: string;
+
+  // Student fields
+  phone?: string;
   institution?: string;
+  degree?: string;
+  branch?: string;
+  graduationYear?: number;
+  targetRole?: string;
+  location?: string;
+
+  // Faculty fields
+  department?: string;
+  designation?: string;
+  yearsOfExperience?: number;
+  areasOfExpertise?: string[];
+
+  // Industry fields
+  companyName?: string;
+  industrySector?: string;
+  companySize?: string;
+  website?: string;
+  contactPerson?: string;
+
+  // Institution fields
+  institutionName?: string;
+  institutionType?: string;
+  universityAffiliation?: string;
+  administratorName?: string;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -342,7 +371,39 @@ export interface AuthSession {
   userId: string;
   email: string;
   fullName: string;
+  role: UserRole;
   expiresAt: number;
+}
+
+export interface ApplicationSubmission {
+  id: string;
+  opportunityId: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  role: string;
+  company: string;
+  appliedDate: string;
+  status: 'Applied' | 'Under Review' | 'Shortlisted' | 'Interview' | 'Selected' | 'Rejected' | 'Withdrawn' | 'Completed';
+  matchScore: number;
+  coverLetter?: string;
+  availability?: string;
+  expectedStartDate?: string;
+  resumeFileName?: string;
+}
+
+export interface FacultyOpportunity {
+  id: string;
+  title: string;
+  type: 'Faculty Internship' | 'Industrial Training' | 'FDP' | 'Industry Workshop' | 'Consultancy' | 'Research Collaboration';
+  organization: string;
+  location: string;
+  duration: string;
+  stipendOrFunding?: string;
+  deadline: string;
+  description: string;
+  requiredExpertise: string[];
+  applied?: boolean;
 }
 
 export interface ResumeRecord {

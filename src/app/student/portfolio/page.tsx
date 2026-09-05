@@ -48,7 +48,7 @@ export default function StudentPortfolioManagementPage() {
                 Digital Portfolio
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-                Your public, tamper-resistant skill portfolio. Shareable with employers, recruiters, and hackathon judges to verify your competence without login credentials.
+                Your public, tamper-resistant skill portfolio. Shareable with employers, recruiters, and academic reviewers to verify your competence without login credentials.
               </p>
             </div>
 

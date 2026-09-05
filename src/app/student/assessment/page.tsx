@@ -105,7 +105,7 @@ const QUESTIONS: Question[] = [
 ];
 
 export default function SkillAssessmentPage() {
-  const { updateAssessmentScore } = useApp();
+  const { updateAssessmentScore, completeAssessment } = useApp();
 
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -167,6 +167,11 @@ export default function SkillAssessmentPage() {
     updateAssessmentScore('Problem Solving', prob);
     updateAssessmentScore('Technical', tech);
     updateAssessmentScore('Communication', comm);
+    completeAssessment({
+      category: 'Technical & Problem Solving',
+      score: total,
+      totalQuestions: QUESTIONS.length,
+    });
   };
 
   const handleRetake = () => {

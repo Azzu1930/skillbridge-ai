@@ -22,8 +22,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      const user = await login(email, password);
+      if (user.role === 'faculty') {
+        router.push('/faculty/dashboard');
+      } else if (user.role === 'industry') {
+        router.push('/industry/dashboard');
+      } else if (user.role === 'institution') {
+        router.push('/institution/dashboard');
+      } else {
+        router.push('/student/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Invalid email or password.');
       setLoading(false);
@@ -119,10 +127,9 @@ export default function LoginPage() {
 
           {/* Guest demo note */}
           <div className="mt-5 p-3 rounded-xl bg-green-50/60 border border-green-200/80 text-[11px] text-[#526157]">
-            <p className="font-semibold text-green-900 mb-0.5">Evaluating for SIH 2026?</p>
+            <p className="font-semibold text-green-900 mb-0.5">Exploring the Platform?</p>
             <p>
-              You can also explore the live interactive demo tour without logging in by clicking{' '}
-              <span className="font-semibold text-green-800">Demo</span> in the navigation bar.
+              You can explore live platform features and role interfaces as a guest or create an account for persistent data tracking.
             </p>
           </div>
 

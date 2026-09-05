@@ -69,7 +69,7 @@ export default function ClosedLoopIntelligencePage() {
                   <Workflow className="w-4 h-4" />
                 </span>
                 <span className="text-xs font-mono uppercase tracking-wider text-blue-600 font-bold">
-                  Core SIH26044 Paradigm Shift
+                  Platform Architecture & Closed Loop
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">

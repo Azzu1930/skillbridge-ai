@@ -34,14 +34,14 @@ export default function PublicStudentPortfolioPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 selection:bg-blue-600 selection:text-white pb-20">
-      {/* Top Banner linking back to SkillBridge AI demo */}
+      {/* Top Banner linking back to SkillBridge AI */}
       <div className="bg-blue-50 border-b border-blue-200 px-4 py-2.5 text-center text-xs text-blue-800 flex items-center justify-center gap-3">
-        <span>Verified Public Candidate Portfolio • Powered by SkillBridge AI (SIH26044)</span>
+        <span>Verified Public Candidate Portfolio • Powered by SkillBridge AI Platform</span>
         <Link
           href="/"
           className="font-bold text-blue-700 hover:text-blue-900 underline inline-flex items-center gap-1"
         >
-          <span>Open Main Demo</span>
+          <span>Open SkillBridge AI</span>
           <ExternalLink className="w-3 h-3" />
         </Link>
       </div>

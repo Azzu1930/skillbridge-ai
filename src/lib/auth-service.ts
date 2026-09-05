@@ -86,13 +86,58 @@ export async function registerUser(params: {
   email: string;
   password: string;
   confirmPassword?: string;
-  targetRole?: string;
+  role?: UserAccount['role'];
+  phone?: string;
   institution?: string;
+  degree?: string;
+  branch?: string;
+  graduationYear?: number;
+  targetRole?: string;
+  location?: string;
+  department?: string;
+  designation?: string;
+  yearsOfExperience?: number;
+  areasOfExpertise?: string[];
+  companyName?: string;
+  industrySector?: string;
+  companySize?: string;
+  website?: string;
+  contactPerson?: string;
+  institutionName?: string;
+  institutionType?: string;
+  universityAffiliation?: string;
+  administratorName?: string;
 }): Promise<{ user: UserAccount; session: AuthSession }> {
-  const { fullName, email, password, confirmPassword, targetRole, institution } = params;
+  const {
+    fullName,
+    email,
+    password,
+    confirmPassword,
+    role = 'student',
+    phone,
+    institution,
+    degree,
+    branch,
+    graduationYear,
+    targetRole,
+    location,
+    department,
+    designation,
+    yearsOfExperience,
+    areasOfExpertise,
+    companyName,
+    industrySector,
+    companySize,
+    website,
+    contactPerson,
+    institutionName,
+    institutionType,
+    universityAffiliation,
+    administratorName,
+  } = params;
 
   if (!fullName || fullName.trim().length < 2) {
-    throw new Error('Please enter your full name (at least 2 characters).');
+    throw new Error('Please enter your full name or entity name (at least 2 characters).');
   }
 
   const cleanEmail = (email || '').trim().toLowerCase();
@@ -123,8 +168,27 @@ export async function registerUser(params: {
     email: cleanEmail,
     passwordHash,
     salt,
-    targetRole: targetRole?.trim() || 'Backend Developer',
-    institution: institution?.trim() || 'Engineering Institute',
+    role,
+    phone,
+    institution: institution?.trim() || institutionName?.trim(),
+    degree,
+    branch,
+    graduationYear,
+    targetRole: targetRole?.trim() || (role === 'student' ? 'Backend Developer' : undefined),
+    location,
+    department,
+    designation,
+    yearsOfExperience,
+    areasOfExpertise,
+    companyName,
+    industrySector,
+    companySize,
+    website,
+    contactPerson,
+    institutionName,
+    institutionType,
+    universityAffiliation,
+    administratorName,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -175,6 +239,7 @@ function createSession(user: UserAccount): AuthSession {
     userId: user.id,
     email: user.email,
     fullName: user.fullName,
+    role: user.role || 'student',
     expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 

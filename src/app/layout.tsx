@@ -6,13 +6,12 @@ import { AppProvider } from '@/context/AppContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SkillBridge AI — Resume Intelligence & Academia × Industry Platform',
+  title: 'SkillBridge AI — Connecting Skills, Academia and Industry',
   description:
-    'Upload your resume, discover skill gaps, measure career readiness and find relevant opportunities with SkillBridge AI.',
+    'SkillBridge AI connects students, faculty, institutions and industry through skill intelligence, career development, internships and placement collaboration.',
   keywords: [
     'SkillBridge AI',
-    'SIH26044',
-    'Resume Intelligence',
+    'Career Intelligence',
     'Academia Industry Collaboration',
     'Skill Mapping',
     'Skill Twin',
@@ -20,12 +19,13 @@ export const metadata: Metadata = {
     'Placements',
     'Readiness Simulator',
     'Resume Analyzer',
+    'Skill Development',
   ],
   authors: [{ name: 'SkillBridge AI Team' }],
   openGraph: {
-    title: 'SkillBridge AI — Resume Intelligence & Academia × Industry Platform',
+    title: 'SkillBridge AI — Connecting Skills, Academia and Industry',
     description:
-      'Upload your resume, discover skill gaps, measure career readiness and find relevant opportunities with SkillBridge AI.',
+      'SkillBridge AI connects students, faculty, institutions and industry through skill intelligence, career development, internships and placement collaboration.',
     type: 'website',
   },
 };

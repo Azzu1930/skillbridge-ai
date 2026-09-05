@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useApp } from '@/context/AppContext';
 import {
@@ -40,6 +41,16 @@ export default function UserDashboardPage() {
     opportunities,
     applyToOpportunity,
   } = useApp();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.role === 'faculty') router.replace('/faculty/dashboard');
+      else if (currentUser.role === 'industry') router.replace('/industry/dashboard');
+      else if (currentUser.role === 'institution') router.replace('/institution/dashboard');
+    }
+  }, [currentUser, router]);
 
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [appliedIds, setAppliedIds] = useState<Record<string, boolean>>({});

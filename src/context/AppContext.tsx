@@ -132,8 +132,27 @@ interface AppContextType {
     email: string;
     password: string;
     confirmPassword?: string;
-    targetRole?: string;
+    role?: UserRole;
+    phone?: string;
     institution?: string;
+    degree?: string;
+    branch?: string;
+    graduationYear?: number;
+    targetRole?: string;
+    location?: string;
+    department?: string;
+    designation?: string;
+    yearsOfExperience?: number;
+    areasOfExpertise?: string[];
+    companyName?: string;
+    industrySector?: string;
+    companySize?: string;
+    website?: string;
+    contactPerson?: string;
+    institutionName?: string;
+    institutionType?: string;
+    universityAffiliation?: string;
+    administratorName?: string;
   }) => Promise<UserAccount>;
   logout: () => void;
   refreshUserReports: () => void;
@@ -144,6 +163,18 @@ interface AppContextType {
     fileDataUrl?: string;
   }) => CareerReport | null;
   deleteReport: (reportId: string) => boolean;
+  submitApplication: (params: {
+    opportunityId: string;
+    coverLetter?: string;
+    availability?: string;
+    expectedStartDate?: string;
+    resumeFileName?: string;
+  }) => boolean;
+  completeAssessment: (params: {
+    category: string;
+    score: number;
+    totalQuestions: number;
+  }) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -417,6 +448,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(result.user);
     setAuthSession(result.session);
     setActiveSessionMode('user');
+    setRoleState(result.user.role || 'student');
 
     // Load user's private reports
     const userReps = getUserReports(result.user.id);
@@ -455,13 +487,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     email: string;
     password: string;
     confirmPassword?: string;
-    targetRole?: string;
+    role?: UserRole;
+    phone?: string;
     institution?: string;
+    degree?: string;
+    branch?: string;
+    graduationYear?: number;
+    targetRole?: string;
+    location?: string;
+    department?: string;
+    designation?: string;
+    yearsOfExperience?: number;
+    areasOfExpertise?: string[];
+    companyName?: string;
+    industrySector?: string;
+    companySize?: string;
+    website?: string;
+    contactPerson?: string;
+    institutionName?: string;
+    institutionType?: string;
+    universityAffiliation?: string;
+    administratorName?: string;
   }): Promise<UserAccount> => {
     const result = await registerUser(params);
     setCurrentUser(result.user);
     setAuthSession(result.session);
     setActiveSessionMode('user');
+    setRoleState(result.user.role || 'student');
     setUserReports([]);
     setLastGeneratedReport(null);
     setUserResumeProfile(null);
@@ -481,7 +533,115 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setResumeVersions([]);
     setApplications(INITIAL_APPLICATIONS);
     setActiveSessionMode('demo');
+    setRoleState('student');
     setStudent(PRIMARY_STUDENT);
+  };
+
+  const submitApplication = (params: {
+    opportunityId: string;
+    coverLetter?: string;
+    availability?: string;
+    expectedStartDate?: string;
+    resumeFileName?: string;
+  }): boolean => {
+    const targetOpp = opportunities.find((o) => o.id === params.opportunityId);
+    if (!targetOpp) return false;
+
+    const newApp: ApplicationItem = {
+      id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      opportunityId: targetOpp.id,
+      company: targetOpp.company,
+      opportunityTitle: targetOpp.title,
+      appliedDate: new Date().toISOString().split('T')[0],
+      status: 'Applied',
+      matchScore: targetOpp.minReadiness || 85,
+      notes: params.coverLetter || 'Submitted via SkillBridge AI verified application portal.',
+    };
+
+    const updated = [newApp, ...applications.filter((a) => a.opportunityId !== params.opportunityId)];
+    setApplications(updated);
+
+    if (currentUser) {
+      const userAppsKey = getScopedStorageKey(currentUser.id, 'applications');
+      try {
+        localStorage.setItem(userAppsKey, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    }
+
+    const newNotif: NotificationItem = {
+      id: `notif_${Date.now()}`,
+      title: 'Application Submitted',
+      message: `Your application for ${targetOpp.title} at ${targetOpp.company} has been submitted.`,
+      time: 'Just now',
+      read: false,
+      type: 'success',
+      link: '/student/applications',
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+
+    return true;
+  };
+
+  const completeAssessment = (params: {
+    category: string;
+    score: number;
+    totalQuestions: number;
+  }) => {
+    const percentage = Math.round((params.score / params.totalQuestions) * 100);
+    setStudent((prev) => {
+      const existingSkillIndex = prev.skills.findIndex(
+        (s) => s.name.toLowerCase() === params.category.toLowerCase()
+      );
+      let updatedSkills = [...prev.skills];
+      if (existingSkillIndex >= 0) {
+        updatedSkills[existingSkillIndex] = {
+          ...updatedSkills[existingSkillIndex],
+          score: Math.max(updatedSkills[existingSkillIndex].score, percentage),
+          verified: percentage >= 70,
+          verificationStatus: percentage >= 70 ? 'Assessment Verified' : 'Pending Verification',
+          lastUpdated: 'Today',
+        };
+      } else {
+        updatedSkills.push({
+          id: `sk_ass_${Date.now()}`,
+          name: params.category,
+          category: 'technical',
+          score: percentage,
+          verified: percentage >= 70,
+          verificationStatus: percentage >= 70 ? 'Assessment Verified' : 'Pending Verification',
+          lastUpdated: 'Today',
+          evidenceCount: 1,
+          evidence: [
+            {
+              type: 'assessment',
+              title: `${params.category} Skill Verification Quiz`,
+              score: percentage,
+              date: 'Today',
+              verified: percentage >= 70,
+              statusText: percentage >= 70 ? 'Assessment Verified' : 'Pending Verification',
+            },
+          ],
+        });
+      }
+      return {
+        ...prev,
+        skills: updatedSkills,
+        readinessScore: Math.min(100, Math.round(prev.readinessScore + (percentage >= 70 ? 4 : 1))),
+      };
+    });
+
+    const notif: NotificationItem = {
+      id: `notif_ass_${Date.now()}`,
+      title: 'Assessment Completed',
+      message: `Completed ${params.category} assessment with ${percentage}% score. Skill Twin verified!`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/student/skill-twin',
+    };
+    setNotifications((prev) => [notif, ...prev]);
   };
 
   const refreshUserReports = () => {
@@ -906,6 +1066,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshUserReports,
         saveCurrentAnalysisAsReport,
         deleteReport,
+        submitApplication,
+        completeAssessment,
       }}
     >
       {children}

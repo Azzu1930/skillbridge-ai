@@ -203,7 +203,7 @@ export function DemoTour() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono uppercase bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-bold">
-                  SIH26044 Demo Tour
+                  Platform Feature Tour
                 </span>
                 <span className="text-xs font-mono font-bold text-slate-500">
                   Step {demoTourStep + 1} of {tourSteps.length}

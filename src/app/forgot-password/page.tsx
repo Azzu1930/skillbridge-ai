@@ -85,9 +85,9 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
-              {/* Development note per Part 10 */}
+              {/* Security note */}
               <div className="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
-                <span className="font-bold">Demo Architecture Note:</span> To facilitate instant hackathon judging without SMTP email dependencies, password reset updates your account credentials directly via verified client-side cryptographic hashing.
+                <span className="font-bold">Security Note:</span> Password reset directly updates your account credentials via verified client-side cryptographic hashing.
               </div>
 
               <form onSubmit={handleReset} className="space-y-4">

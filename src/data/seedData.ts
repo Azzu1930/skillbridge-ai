@@ -260,7 +260,7 @@ export const PRIMARY_STUDENT: StudentProfile = {
   ],
   achievements: [
     'Ranked in Top 5% across National College Coding League 2025',
-    'Smart India Hackathon 2026 Institutional Finalist (SIH26044)',
+    'National Tech Innovation Championship Finalist 2025',
     'Organized Campus Open-Source Bootcamp mentoring 70+ junior developers',
   ],
 };
