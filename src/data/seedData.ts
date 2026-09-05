@@ -347,6 +347,67 @@ export const TARGET_ROLE_BENCHMARKS: Record<string, TargetRoleBenchmark> = {
       { skill: 'System Design', importance: 'High', targetScore: 80 },
     ],
   },
+  'Cloud Engineer': {
+    role: 'Cloud Engineer',
+    description: 'Architects and maintains cloud computing environments on AWS, Azure, and GCP with automated monitoring, security, and elasticity.',
+    averageStartingSalary: '₹9.0 – 16.0 LPA',
+    requiredSkills: [
+      { skill: 'Cloud', importance: 'High', targetScore: 90 },
+      { skill: 'Docker', importance: 'High', targetScore: 85 },
+      { skill: 'Linux', importance: 'High', targetScore: 80 },
+      { skill: 'Python', importance: 'Medium', targetScore: 75 },
+      { skill: 'System Design', importance: 'High', targetScore: 80 },
+    ],
+  },
+  'DevOps Engineer': {
+    role: 'DevOps Engineer',
+    description: 'Bridges software engineering and system administration with robust CI/CD deployment pipelines, automated tests, and container runtimes.',
+    averageStartingSalary: '₹9.5 – 16.5 LPA',
+    requiredSkills: [
+      { skill: 'Docker', importance: 'High', targetScore: 90 },
+      { skill: 'CI/CD', importance: 'High', targetScore: 85 },
+      { skill: 'Git', importance: 'High', targetScore: 90 },
+      { skill: 'Cloud', importance: 'High', targetScore: 85 },
+      { skill: 'Linux', importance: 'High', targetScore: 85 },
+    ],
+  },
+  'Data Scientist': {
+    role: 'Data Scientist',
+    description: 'Designs predictive algorithms, statistical pipelines, and machine learning models to solve complex predictive problems.',
+    averageStartingSalary: '₹10.0 – 17.5 LPA',
+    requiredSkills: [
+      { skill: 'Python', importance: 'High', targetScore: 95 },
+      { skill: 'Machine Learning', importance: 'High', targetScore: 90 },
+      { skill: 'SQL', importance: 'High', targetScore: 85 },
+      { skill: 'Pandas', importance: 'High', targetScore: 90 },
+      { skill: 'Problem Solving', importance: 'High', targetScore: 85 },
+    ],
+  },
+  'Software Engineer': {
+    role: 'Software Engineer',
+    description: 'Generalist software builder proficient in data structures, algorithms, object-oriented design, databases, and clean code principles.',
+    averageStartingSalary: '₹8.0 – 14.5 LPA',
+    requiredSkills: [
+      { skill: 'Data Structures & Algorithms', importance: 'High', targetScore: 90 },
+      { skill: 'Python', importance: 'High', targetScore: 85 },
+      { skill: 'SQL', importance: 'High', targetScore: 80 },
+      { skill: 'Git', importance: 'High', targetScore: 80 },
+      { skill: 'System Design', importance: 'Medium', targetScore: 70 },
+      { skill: 'Testing', importance: 'Medium', targetScore: 75 },
+    ],
+  },
+  'QA Engineer': {
+    role: 'QA Engineer',
+    description: 'Ensures software quality, automated regression testing, integration testing, API validation, and system performance benchmarks.',
+    averageStartingSalary: '₹6.5 – 10.5 LPA',
+    requiredSkills: [
+      { skill: 'Testing', importance: 'High', targetScore: 90 },
+      { skill: 'Python', importance: 'High', targetScore: 80 },
+      { skill: 'REST APIs', importance: 'High', targetScore: 85 },
+      { skill: 'SQL', importance: 'Medium', targetScore: 75 },
+      { skill: 'Git', importance: 'Medium', targetScore: 75 },
+    ],
+  },
 };
 
 export const SIMULATOR_ACTIONS: SimulatorAction[] = [

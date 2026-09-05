@@ -29,37 +29,37 @@ export default function IndustryDashboardPage() {
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="p-1 rounded-md bg-amber-950 text-amber-400 border border-amber-800/60">
+              <span className="p-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                 <Building2 className="w-4 h-4" />
               </span>
-              <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
+              <span className="text-xs font-mono uppercase tracking-wider text-amber-700 font-bold">
                 Industry Talent & Hiring Portal
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Talent Acquisition Intelligence
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Active partner account: <strong className="text-amber-300 font-semibold">Razorpay Software / TechCorp Labs</strong>. Access AI-matched student candidates, inspect market skill graphs, and calibrate hiring requirements.
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+              Active partner account: <strong className="text-slate-900 font-semibold">Razorpay Software / TechCorp Labs</strong>. Access AI-matched student candidates, inspect market skill graphs, and calibrate hiring requirements.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
             <Link
               href="/industry/post-opportunity"
-              className="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition-all shadow-md shadow-amber-500/20 flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Post New Role</span>
             </Link>
             <Link
               href="/industry/skill-graph"
-              className="px-4 py-2 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Network className="w-4 h-4 text-emerald-400" />
+              <Network className="w-4 h-4 text-emerald-600" />
               <span>Skill Graph</span>
             </Link>
           </div>
@@ -67,48 +67,48 @@ export default function IndustryDashboardPage() {
 
         {/* 4 Top KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md">
-            <span className="text-xs font-medium text-slate-400">Active Jobs</span>
-            <p className="text-3xl font-black text-white mt-2">{activeJobs + 4}</p>
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+            <span className="text-xs font-medium text-slate-500">Active Jobs</span>
+            <p className="text-3xl font-black text-slate-900 mt-2">{activeJobs + 4}</p>
             <p className="text-[11px] text-slate-500 mt-1">Across Backend & Cloud units</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md">
-            <span className="text-xs font-medium text-slate-400">Active Internships</span>
-            <p className="text-3xl font-black text-white mt-2">{activeInternships + 8}</p>
-            <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+            <span className="text-xs font-medium text-slate-500">Active Internships</span>
+            <p className="text-3xl font-black text-slate-900 mt-2">{activeInternships + 8}</p>
+            <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> 18 candidates matched
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md">
-            <span className="text-xs font-medium text-slate-400">Total Applications</span>
-            <p className="text-3xl font-black text-white mt-2">142</p>
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+            <span className="text-xs font-medium text-slate-500">Total Applications</span>
+            <p className="text-3xl font-black text-slate-900 mt-2">142</p>
             <p className="text-[11px] text-slate-500 mt-1">Filtered via AI Skill Twin</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md">
-            <span className="text-xs font-medium text-slate-400">Shortlisted Candidates</span>
-            <p className="text-3xl font-black text-amber-400 mt-2">24</p>
-            <p className="text-[11px] text-slate-400 mt-1">Readiness score &gt; 75%</p>
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+            <span className="text-xs font-medium text-slate-500">Shortlisted Candidates</span>
+            <p className="text-3xl font-black text-blue-600 mt-2">24</p>
+            <p className="text-[11px] text-slate-500 mt-1">Readiness score &gt; 75%</p>
           </div>
         </div>
 
         {/* Candidate Matches & Demand Snippet */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Top Candidate Matches */}
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md space-y-4">
+          <div className="lg:col-span-2 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Users className="w-4 h-4 text-amber-400" />
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-600" />
                   Top Matched Student Candidates
                 </h2>
-                <p className="text-xs text-slate-400">Ranked for Backend Developer Intern opening</p>
+                <p className="text-xs text-slate-500">Ranked for Backend Developer Intern opening</p>
               </div>
               <Link
                 href="/industry/candidates"
-                className="text-xs font-semibold text-amber-400 hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
               >
                 <span>View All Ranked ({CANDIDATE_EVALUATIONS.length})</span>
                 <ArrowRight className="w-3 h-3" />
@@ -119,25 +119,25 @@ export default function IndustryDashboardPage() {
               {CANDIDATE_EVALUATIONS.slice(0, 3).map((cand) => (
                 <div
                   key={cand.candidateId}
-                  className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors"
+                  className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-300 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <img
                       src={cand.avatar}
                       alt={cand.name}
-                      className="w-10 h-10 rounded-full object-cover border border-amber-500/40"
+                      className="w-10 h-10 rounded-full object-cover border border-blue-200"
                     />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{cand.name}</span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">
+                        <span className="text-sm font-bold text-slate-900">{cand.name}</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                           {cand.matchScore}% Match
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5">{cand.role}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{cand.role}</p>
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {cand.matchedSkills.slice(0, 3).map((s) => (
-                          <span key={s} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                          <span key={s} className="text-[9px] px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
                             {s}
                           </span>
                         ))}
@@ -148,7 +148,7 @@ export default function IndustryDashboardPage() {
                   <div className="text-right shrink-0">
                     <Link
                       href="/industry/candidates"
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-slate-300 shadow-sm inline-block"
                     >
                       Why this candidate? →
                     </Link>
@@ -159,14 +159,14 @@ export default function IndustryDashboardPage() {
           </div>
 
           {/* Industry Demand Snippet */}
-          <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md flex flex-col justify-between">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
                   Top Skill Trends
                 </h2>
-                <Link href="/industry/demand" className="text-xs text-emerald-400 hover:underline">
+                <Link href="/industry/demand" className="text-xs text-blue-600 hover:underline">
                   Full Analytics →
                 </Link>
               </div>
@@ -175,13 +175,13 @@ export default function IndustryDashboardPage() {
                 {INDUSTRY_SKILL_DEMANDS.slice(0, 5).map((d) => (
                   <div
                     key={d.skill}
-                    className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between"
+                    className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/80 flex items-center justify-between"
                   >
                     <div>
-                      <p className="text-xs font-semibold text-white">{d.skill}</p>
-                      <p className="text-[10px] text-slate-400">{d.demandCount} job postings</p>
+                      <p className="text-xs font-semibold text-slate-900">{d.skill}</p>
+                      <p className="text-[10px] text-slate-500">{d.demandCount} job postings</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-0.5">
+                    <span className="text-xs font-mono font-bold text-emerald-600 flex items-center gap-0.5">
                       ↑ {d.growth}%
                     </span>
                   </div>
@@ -189,10 +189,10 @@ export default function IndustryDashboardPage() {
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800">
+            <div className="mt-4 pt-3 border-t border-slate-100">
               <Link
                 href="/industry/feedback"
-                className="w-full py-2.5 rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-800/60 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
               >
                 <span>Submit Post-Interview Feedback</span>
                 <ArrowRight className="w-3.5 h-3.5" />

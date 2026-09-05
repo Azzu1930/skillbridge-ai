@@ -111,22 +111,22 @@ export default function IndustrySkillGraphPage() {
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 shadow-xl">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="p-1 rounded-md bg-indigo-950 text-indigo-400 border border-indigo-800/60">
+                <span className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-200">
                   <Network className="w-4 h-4" />
                 </span>
-                <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 font-bold">
+                <span className="text-xs font-mono uppercase tracking-wider text-blue-600 font-bold">
                   Ontological Competency Mapping
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 Industry Skill Graph
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Visualizing the multi-layered topology connecting <strong className="text-white">Roles → Core Skills → Production Tools → Verified Projects → Opportunities</strong>. Click any node to inspect market analytics.
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+                Visualizing the multi-layered topology connecting <strong className="text-slate-900">Roles → Core Skills → Production Tools → Verified Projects → Opportunities</strong>. Click any node to inspect market analytics.
               </p>
             </div>
           </div>
@@ -135,21 +135,21 @@ export default function IndustrySkillGraphPage() {
         {/* Interactive Visual Graph & Detail Drawer */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Graph Network Visual Canvas */}
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[500px]">
+          <div className="lg:col-span-2 p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[500px]">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Interactive Node Network
                 </span>
-                <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" /> Role
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> Role
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> Core Skill
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" /> Core Skill
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> System Tool
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" /> System Tool
                   </span>
                 </div>
               </div>
@@ -160,15 +160,15 @@ export default function IndustrySkillGraphPage() {
                 <div className="flex justify-center">
                   <button
                     onClick={() => setSelectedNode(GRAPH_NODES[0])}
-                    className={`px-5 py-3 rounded-2xl border transition-all flex items-center gap-3 shadow-lg ${
+                    className={`px-5 py-3 rounded-2xl border transition-all flex items-center gap-3 shadow-sm ${
                       selectedNode.id === GRAPH_NODES[0].id
-                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-indigo-600/40 scale-105'
-                        : 'bg-slate-950 border-slate-700 text-slate-200 hover:border-indigo-500'
+                        ? 'bg-blue-600 border-blue-500 text-white shadow-md scale-105'
+                        : 'bg-white border-slate-300 text-slate-800 hover:border-blue-500'
                     }`}
                   >
-                    <Server className="w-5 h-5 text-indigo-300" />
+                    <Server className={`w-5 h-5 ${selectedNode.id === GRAPH_NODES[0].id ? 'text-white' : 'text-blue-600'}`} />
                     <div className="text-left">
-                      <p className="text-xs font-extrabold uppercase tracking-wide">Root Role Node</p>
+                      <p className={`text-xs font-extrabold uppercase tracking-wide ${selectedNode.id === GRAPH_NODES[0].id ? 'text-blue-100' : 'text-slate-500'}`}>Root Role Node</p>
                       <p className="text-sm font-black">{GRAPH_NODES[0].label}</p>
                     </div>
                   </button>
@@ -176,7 +176,7 @@ export default function IndustrySkillGraphPage() {
 
                 {/* Connecting SVG Lines */}
                 <div className="flex justify-center">
-                  <div className="w-0.5 h-8 bg-gradient-to-b from-indigo-500 to-slate-700" />
+                  <div className="w-0.5 h-8 bg-gradient-to-b from-blue-500 to-slate-300" />
                 </div>
 
                 {/* Child Nodes Branch Grid */}
@@ -192,25 +192,25 @@ export default function IndustrySkillGraphPage() {
                         className={`p-4 rounded-xl border text-left transition-all ${
                           isSelected
                             ? isSkill
-                              ? 'bg-emerald-950/80 border-emerald-400 text-white shadow-lg shadow-emerald-950 scale-[1.03]'
-                              : 'bg-amber-950/80 border-amber-400 text-white shadow-lg shadow-amber-950 scale-[1.03]'
-                            : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
+                              ? 'bg-emerald-50 border-emerald-400 text-emerald-950 shadow-sm scale-[1.03]'
+                              : 'bg-amber-50 border-amber-400 text-amber-950 shadow-sm scale-[1.03]'
+                            : 'bg-slate-50/70 border-slate-200/80 text-slate-700 hover:border-slate-300'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1.5">
                           <span
                             className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
                               isSkill
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                                : 'bg-amber-950 text-amber-300 border border-amber-800'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300'
                             }`}
                           >
                             {node.type}
                           </span>
-                          <span className="text-[10px] font-mono text-emerald-400">{node.demand}</span>
+                          <span className="text-[10px] font-mono text-emerald-700 font-semibold">{node.demand}</span>
                         </div>
-                        <p className="text-xs font-bold text-white">{node.label}</p>
-                        <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{node.description}</p>
+                        <p className="text-xs font-bold text-slate-900">{node.label}</p>
+                        <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">{node.description}</p>
                       </button>
                     );
                   })}
@@ -218,47 +218,47 @@ export default function IndustrySkillGraphPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span>Dynamic graph ontology refreshed weekly from live job specs</span>
-              <span className="text-emerald-400 font-medium">Click node to inspect intelligence →</span>
+              <span className="text-blue-600 font-medium">Click node to inspect intelligence →</span>
             </div>
           </div>
 
           {/* Right Detail Inspection Drawer */}
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4 flex flex-col justify-between">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-4 flex flex-col justify-between">
             <div>
-              <div className="flex items-start justify-between border-b border-slate-800 pb-3 mb-4">
+              <div className="flex items-start justify-between border-b border-slate-100 pb-3 mb-4">
                 <div>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 font-semibold">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
                     {selectedNode.type} Intelligence
                   </span>
-                  <h2 className="text-xl font-black text-white mt-1.5">{selectedNode.label}</h2>
+                  <h2 className="text-xl font-black text-slate-900 mt-1.5">{selectedNode.label}</h2>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-mono font-bold text-emerald-400 block">
+                  <span className="text-xs font-mono font-bold text-emerald-700 block">
                     {selectedNode.demand}
                   </span>
-                  <span className="text-[10px] text-slate-400">Required: {selectedNode.level}</span>
+                  <span className="text-[10px] text-slate-500">Required: {selectedNode.level}</span>
                 </div>
               </div>
 
               <div className="space-y-4 text-xs">
                 <div>
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Industry Definition & Purpose
                   </h3>
-                  <p className="text-slate-300 leading-relaxed">{selectedNode.description}</p>
+                  <p className="text-slate-600 leading-relaxed">{selectedNode.description}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                     Associated High-Demand Roles
                   </h3>
                   <div className="flex flex-wrap gap-1">
                     {selectedNode.relatedRoles.map((role) => (
                       <span
                         key={role}
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800"
+                        className="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200"
                       >
                         {role}
                       </span>
@@ -267,34 +267,34 @@ export default function IndustrySkillGraphPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                     Curated Learning Resources
                   </h3>
                   <div className="space-y-1.5">
                     {selectedNode.resources.map((res) => (
                       <div
                         key={res}
-                        className="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[11px] text-slate-300"
+                        className="p-2 rounded-lg bg-slate-50/70 border border-slate-200/80 flex items-center justify-between text-[11px] text-slate-700"
                       >
                         <span className="truncate mr-2">{res}</span>
-                        <ExternalLink className="w-3 h-3 text-slate-500 shrink-0" />
+                        <ExternalLink className="w-3 h-3 text-slate-400 shrink-0" />
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                     Active Hiring Opportunities
                   </h3>
                   <div className="space-y-1.5">
                     {selectedNode.opportunities.map((opp) => (
                       <div
                         key={opp}
-                        className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-800/40 flex items-center justify-between text-[11px] text-emerald-300"
+                        className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px] text-emerald-800"
                       >
                         <span>{opp}</span>
-                        <Link href="/student/opportunities" className="text-emerald-400 hover:underline">
+                        <Link href="/student/opportunities" className="text-emerald-700 font-semibold hover:underline">
                           View →
                         </Link>
                       </div>
@@ -304,10 +304,10 @@ export default function IndustrySkillGraphPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800">
+            <div className="pt-4 border-t border-slate-100">
               <Link
                 href="/student/simulator"
-                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/30"
+                className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
               >
                 <span>Simulate Learning {selectedNode.label}</span>
                 <ArrowRight className="w-3.5 h-3.5" />

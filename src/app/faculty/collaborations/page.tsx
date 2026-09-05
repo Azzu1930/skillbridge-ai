@@ -119,21 +119,21 @@ export default function FacultyCollaborationsPage() {
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-slate-800 shadow-xl">
+        <div className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="p-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                <span className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-200">
                   <Workflow className="w-4 h-4" />
                 </span>
-                <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold">
+                <span className="text-xs font-mono uppercase tracking-wider text-blue-600 font-bold">
                   Institutional Academia–Industry Synergy
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 Industry Collaborations & Faculty Development
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
                 Connect university faculty and departments with industry-sponsored research grants, Faculty Development Programs (FDPs), consultancy agreements, and executive guest lectures.
               </p>
             </div>
@@ -141,8 +141,8 @@ export default function FacultyCollaborationsPage() {
         </div>
 
         {feedbackMessage && (
-          <div className="p-4 rounded-xl bg-emerald-950/80 border border-emerald-700 text-xs font-semibold text-emerald-300 flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>{feedbackMessage}</span>
           </div>
         )}
@@ -160,10 +160,10 @@ export default function FacultyCollaborationsPage() {
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
                 filterType === type
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 shadow-sm'
               }`}
             >
               {type}
@@ -176,27 +176,27 @@ export default function FacultyCollaborationsPage() {
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 transition-all shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6"
+              className="p-6 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-300 transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold uppercase">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold uppercase">
                     {item.type}
                   </span>
-                  <span className="text-xs text-slate-400">
-                    Partner: <strong className="text-white">{item.partnerCompany}</strong>
+                  <span className="text-xs text-slate-500">
+                    Partner: <strong className="text-slate-900">{item.partnerCompany}</strong>
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
+                <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
                   {item.description}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
                   <span>Duration: {item.duration}</span>
                   <span>•</span>
-                  <span className="text-emerald-300 font-semibold">{item.seatsOrStipend}</span>
+                  <span className="text-blue-600 font-semibold">{item.seatsOrStipend}</span>
                   <span>•</span>
                   <span>Target: {item.department}</span>
                   <span>•</span>
@@ -206,14 +206,14 @@ export default function FacultyCollaborationsPage() {
 
               <div className="shrink-0 flex items-center justify-end">
                 {item.applied ? (
-                  <span className="px-4 py-2 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs font-bold flex items-center gap-1.5">
+                  <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Proposal Submitted</span>
                   </span>
                 ) : (
                   <button
                     onClick={() => handleApply(item.id)}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-1.5"
                   >
                     <span>Express Interest / Apply</span>
                     <ArrowRight className="w-3.5 h-3.5" />

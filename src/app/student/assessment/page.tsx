@@ -10,9 +10,7 @@ import {
   AlertCircle,
   ArrowRight,
   RefreshCw,
-  HelpCircle,
   Sparkles,
-  ChevronRight,
 } from 'lucide-react';
 
 interface Question {
@@ -60,58 +58,56 @@ const QUESTIONS: Question[] = [
   {
     id: 5,
     category: 'Problem Solving',
-    question: 'A background worker queue receives 2,000 tasks/sec, but each worker handles 50 tasks/sec. How many concurrent worker processes are required at minimum to prevent queue backlog?',
-    options: ['20 workers', '40 workers', '50 workers', '100 workers'],
+    question: 'A backend server receives 1,000 asynchronous orders per second, but the inventory database can only handle 200 writes/sec safely. What architectural pattern best prevents database collapse?',
+    options: [
+      'Scale up CPU on the web server',
+      'Buffer requests in a persistent Redis/Kafka queue with worker pools',
+      'Reject all requests above 200/sec with HTTP 500',
+      'Disable database ACID transactions during peak load',
+    ],
     correctIndex: 1,
-    explanation: '2,000 tasks/sec / 50 tasks/sec/worker = 40 workers required to maintain throughput parity.',
+    explanation: 'A message queue (Redis/Kafka) decouples high-throughput bursts and enables worker pools to drain tasks at a controlled, safe rate.',
   },
   {
     id: 6,
     category: 'Problem Solving',
-    question: 'You observe an API endpoint latency spiking from 45ms to 1200ms when querying users by email. What is the most probable database fix?',
-    options: ['Increase server RAM', 'Create an index on users(email)', 'Switch to NoSQL', 'Add multithreading in backend'],
-    correctIndex: 1,
-    explanation: 'A sudden latency spike on table scans without an index requires a B-Tree index on the search column.',
+    question: 'When designing idempotent REST APIs, what HTTP header or token should clients pass to safely retry failed network requests without creating duplicate charges?',
+    options: ['Authorization Token', 'ETag', 'Idempotency-Key (UUID)', 'User-Agent'],
+    correctIndex: 2,
+    explanation: 'An Idempotency-Key ensures the server checks whether the operation was already executed before reapplying it.',
   },
   {
     id: 7,
-    category: 'Problem Solving',
-    question: 'If two concurrent microservices attempt to debit the same wallet balance, which database mechanism prevents the double-spending race condition?',
-    options: ['SELECT FOR UPDATE (Pessimistic lock)', 'READ UNCOMMITTED', 'In-memory caching', 'DNS Load balancing'],
-    correctIndex: 0,
-    explanation: 'Pessimistic row-locking (`SELECT FOR UPDATE`) or serializable transactions guarantee isolation.',
+    category: 'Communication',
+    question: 'You discover that an API change you deployed breaks backwards compatibility for 10% of mobile users. What is the most professional initial response?',
+    options: [
+      'Silently patch the code overnight and hope nobody noticed',
+      'Immediately alert the engineering channel, propose a rollback/hotfix, and publish a clear incident status update',
+      'Blame the mobile team for not reading the latest documentation',
+      'Wait for customer support tickets to accumulate before taking action',
+    ],
+    correctIndex: 1,
+    explanation: 'Transparent communication, immediate stabilization (rollback/hotfix), and blameless stakeholder updates reflect engineering maturity.',
   },
   {
     id: 8,
     category: 'Communication',
-    question: 'When submitting an architectural Pull Request that introduces a breaking API change to teammates, what is the best practice?',
+    question: 'When communicating a 2-day delay on a promised project milestone to an industry mentor or engineering manager, what should your update include?',
     options: [
-      'Merge silently and fix complaints in Slack',
-      'Provide a deprecation notice, migration guide, and backward-compatible v1 endpoint',
-      'Delete the old endpoint immediately to enforce upgrades',
-      'Wait for the product manager to write the release notes',
+      'No update until the project is finally finished',
+      'Root cause explanation, what was tried, revised ETA, and updated contingency plan',
+      'A one-sentence message: "Delayed due to technical difficulties"',
+      'A request to drop testing requirements so you can finish on time',
     ],
     correctIndex: 1,
-    explanation: 'Enterprise teams maintain API contracts through deprecation windows and explicit migration guides.',
-  },
-  {
-    id: 9,
-    category: 'Communication',
-    question: 'During a production incident retrospective (post-mortem), the primary objective is to:',
-    options: [
-      'Identify and discipline the engineer who pushed the faulty commit',
-      'Establish a blameless analysis of system vulnerabilities and implement automated safeguards',
-      'Explain away the downtime as an unavoidable cloud outage',
-      'Delete the incident logs to prevent negative client PR',
-    ],
-    correctIndex: 1,
-    explanation: 'Effective engineering cultures conduct blameless post-mortems focused on systemic prevention.',
+    explanation: 'Effective engineers communicate delays proactively with context, tradeoffs, and a revised delivery roadmap.',
   },
 ];
 
 export default function SkillAssessmentPage() {
   const { updateAssessmentScore } = useApp();
-  const [answers, setAnswers] = useState<{ [qId: number]: number }>({});
+
+  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [scoreResult, setScoreResult] = useState<{
     totalScore: number;
@@ -183,35 +179,35 @@ export default function SkillAssessmentPage() {
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 shadow-xl">
+        <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm text-slate-900">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="p-1 rounded-md bg-indigo-950 text-indigo-400 border border-indigo-800/60">
+            <span className="p-1 rounded-md bg-blue-50 text-blue-600 border border-blue-200">
               <Award className="w-4 h-4" />
             </span>
-            <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 font-bold">
+            <span className="text-xs font-mono uppercase tracking-wider text-blue-700 font-bold">
               Standardized Competency Verification
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Interactive Skill Assessment
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
             Take this verified assessment covering Technical Backend Standards, Algorithmic Problem Solving, and Engineering Communication. Submissions automatically recalculate your AI Skill Twin scores.
           </p>
         </div>
 
         {/* Results Banner if Submitted */}
         {submitted && scoreResult && (
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-900 border border-indigo-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm animate-in fade-in duration-200 text-slate-900">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
               <div>
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
                   Assessment Completed & Synchronized
                 </span>
-                <h2 className="text-2xl font-black text-white mt-1">
+                <h2 className="text-2xl font-black text-slate-900 mt-1">
                   Overall Score: {scoreResult.totalScore}%
                 </h2>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-500">
                   {scoreResult.correctCount} of {QUESTIONS.length} answers verified correct.
                 </p>
               </div>
@@ -219,14 +215,14 @@ export default function SkillAssessmentPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleRetake}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 border border-slate-200 flex items-center gap-1.5"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
                   <span>Retake Test</span>
                 </button>
                 <Link
                   href="/student/skill-twin"
-                  className="px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
                 >
                   <span>View Updated Skill Twin</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -236,22 +232,22 @@ export default function SkillAssessmentPage() {
 
             {/* Score Breakdown Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Technical Architecture</span>
-                <p className="text-xl font-bold text-indigo-400 mt-1">{scoreResult.techScore}%</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">FastAPI, B-Tree, HTTP, Python</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-semibold">Technical Architecture</span>
+                <p className="text-xl font-extrabold text-blue-700 mt-1">{scoreResult.techScore}%</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">FastAPI, B-Tree, HTTP, Python</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Problem Solving</span>
-                <p className="text-xl font-bold text-emerald-400 mt-1">{scoreResult.problemScore}%</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Concurrency, Queue Sizing, Tuning</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-semibold">Problem Solving</span>
+                <p className="text-xl font-extrabold text-emerald-700 mt-1">{scoreResult.problemScore}%</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Concurrency, Queue Sizing, Tuning</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Communication & Process</span>
-                <p className="text-xl font-bold text-amber-400 mt-1">{scoreResult.commScore}%</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">API Deprecation, Blameless Post-Mortems</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-semibold">Communication & Process</span>
+                <p className="text-xl font-extrabold text-purple-700 mt-1">{scoreResult.commScore}%</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">API Deprecation, Blameless Post-Mortems</p>
               </div>
             </div>
           </div>
@@ -261,7 +257,6 @@ export default function SkillAssessmentPage() {
         <div className="space-y-4">
           {QUESTIONS.map((q, qIndex) => {
             const selectedOpt = answers[q.id];
-            const isAnswered = selectedOpt !== undefined;
             const isCorrect = selectedOpt === q.correctIndex;
 
             return (
@@ -270,46 +265,46 @@ export default function SkillAssessmentPage() {
                 className={`p-6 rounded-2xl border transition-all ${
                   submitted
                     ? isCorrect
-                      ? 'bg-emerald-950/15 border-emerald-800/50'
-                      : 'bg-red-950/15 border-red-800/50'
-                    : 'bg-slate-900/70 border-slate-800 shadow-md'
+                      ? 'bg-emerald-50/40 border-emerald-200'
+                      : 'bg-red-50/40 border-red-200'
+                    : 'bg-white border-slate-200 shadow-xs'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-mono uppercase font-bold text-indigo-400 bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/60">
+                  <span className="text-[10px] font-mono uppercase font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                     Question {qIndex + 1} • {q.category}
                   </span>
                   {submitted && (
                     <span
                       className={`text-xs font-bold flex items-center gap-1 ${
-                        isCorrect ? 'text-emerald-400' : 'text-red-400'
+                        isCorrect ? 'text-emerald-700' : 'text-red-700'
                       }`}
                     >
-                      {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                      {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-red-600" />}
                       {isCorrect ? 'Correct (+10 pts)' : 'Incorrect (0 pts)'}
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-sm font-semibold text-white mt-1 mb-4 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-900 mt-1 mb-4 leading-relaxed">
                   {q.question}
                 </h3>
 
                 {/* Options */}
                 <div className="space-y-2">
                   {q.options.map((opt, optIndex) => {
-                    let optStyle = 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-slate-700';
+                    let optStyle = 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100/80';
 
                     if (submitted) {
                       if (optIndex === q.correctIndex) {
-                        optStyle = 'bg-emerald-950/80 border-emerald-600 text-emerald-200 font-bold';
+                        optStyle = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold';
                       } else if (selectedOpt === optIndex) {
-                        optStyle = 'bg-red-950/80 border-red-600 text-red-200';
+                        optStyle = 'bg-red-50 border-red-400 text-red-900 font-medium';
                       } else {
-                        optStyle = 'bg-slate-950/40 border-slate-900 text-slate-500 opacity-60';
+                        optStyle = 'bg-slate-50 border-slate-200 text-slate-400 opacity-60';
                       }
                     } else if (selectedOpt === optIndex) {
-                      optStyle = 'bg-indigo-950/80 border-indigo-500 text-white font-semibold';
+                      optStyle = 'bg-blue-50 border-blue-500 text-blue-900 font-bold';
                     }
 
                     return (
@@ -321,7 +316,7 @@ export default function SkillAssessmentPage() {
                       >
                         <span>{opt}</span>
                         {selectedOpt === optIndex && !submitted && (
-                          <div className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                          <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
                         )}
                       </button>
                     );
@@ -330,10 +325,10 @@ export default function SkillAssessmentPage() {
 
                 {/* Explanation on submission */}
                 {submitted && (
-                  <div className="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-300 flex items-start gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-600 flex items-start gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
                     <span>
-                      <strong className="text-white">Explanation: </strong>
+                      <strong className="text-slate-900">Explanation: </strong>
                       {q.explanation}
                     </span>
                   </div>
@@ -345,14 +340,14 @@ export default function SkillAssessmentPage() {
 
         {/* Submit Action Bar */}
         {!submitted && (
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between sticky bottom-4 z-20 shadow-2xl">
-            <span className="text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between sticky bottom-4 z-20 shadow-xl">
+            <span className="text-xs text-slate-500 font-medium">
               {Object.keys(answers).length} of {QUESTIONS.length} questions answered
             </span>
             <button
               onClick={handleSubmit}
               disabled={Object.keys(answers).length === 0}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2"
             >
               <span>Submit & Update Skill Twin</span>
               <ArrowRight className="w-4 h-4" />

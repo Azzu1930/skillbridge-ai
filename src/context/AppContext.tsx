@@ -11,6 +11,9 @@ import {
   CompanyFeedbackRecord,
   TrainingRecommendationItem,
   NotificationItem,
+  ResumeAnalysisResult,
+  ResumeVersion,
+  StudentSkill,
 } from '@/types';
 import {
   PRIMARY_STUDENT,
@@ -21,12 +24,20 @@ import {
   COMPANY_FEEDBACKS,
   TRAINING_RECOMMENDATIONS,
   INITIAL_NOTIFICATIONS,
+  TARGET_ROLE_BENCHMARKS,
 } from '@/data/seedData';
+import { compareResumeVersions } from '@/lib/resume-parser';
 
 interface AppContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   student: StudentProfile;
+  activeSessionMode: 'demo' | 'user';
+  setSessionMode: (mode: 'demo' | 'user') => void;
+  userResumeProfile: ResumeAnalysisResult | null;
+  resumeVersions: ResumeVersion[];
+  handleResumeUpload: (analysis: ResumeAnalysisResult) => void;
+  setUserTargetRole: (role: string) => void;
   opportunities: JobOpportunity[];
   applications: ApplicationItem[];
   simulatorActions: SimulatorAction[];
@@ -57,6 +68,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<UserRole>('student');
   const [student, setStudent] = useState<StudentProfile>(PRIMARY_STUDENT);
+  const [activeSessionMode, setActiveSessionMode] = useState<'demo' | 'user'>('demo');
+  const [userResumeProfile, setUserResumeProfile] = useState<ResumeAnalysisResult | null>(null);
+  const [resumeVersions, setResumeVersions] = useState<ResumeVersion[]>([]);
   const [opportunities, setOpportunities] = useState<JobOpportunity[]>(INITIAL_OPPORTUNITIES);
   const [applications, setApplications] = useState<ApplicationItem[]>(INITIAL_APPLICATIONS);
   const [simulatorActions, setSimulatorActions] = useState<SimulatorAction[]>(SIMULATOR_ACTIONS);
@@ -74,13 +88,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedRole && ['student', 'industry', 'faculty', 'admin'].includes(savedRole)) {
         setRoleState(savedRole);
       }
-      const savedStudent = localStorage.getItem('sb_student_profile');
-      if (savedStudent) {
-        setStudent(JSON.parse(savedStudent));
+      const savedResume = localStorage.getItem('sb_user_resume');
+      if (savedResume) {
+        const parsed: ResumeAnalysisResult = JSON.parse(savedResume);
+        setUserResumeProfile(parsed);
       }
-      const savedApps = localStorage.getItem('sb_applications');
-      if (savedApps) {
-        setApplications(JSON.parse(savedApps));
+      const savedVersions = localStorage.getItem('sb_resume_versions');
+      if (savedVersions) {
+        setResumeVersions(JSON.parse(savedVersions));
+      }
+      const savedMode = localStorage.getItem('sb_session_mode') as 'demo' | 'user';
+      if (savedMode) {
+        setActiveSessionMode(savedMode);
       }
     } catch {
       // ignore storage errors
@@ -96,200 +115,318 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setSessionMode = (mode: 'demo' | 'user') => {
+    setActiveSessionMode(mode);
+    if (mode === 'demo') {
+      setStudent(PRIMARY_STUDENT);
+    } else if (userResumeProfile) {
+      syncUserResumeToProfile(userResumeProfile);
+    }
+    try {
+      localStorage.setItem('sb_session_mode', mode);
+    } catch {
+      // ignore
+    }
+  };
+
+  /**
+   * Convert User's Extracted Resume into active Student Profile
+   */
+  const syncUserResumeToProfile = (analysis: ResumeAnalysisResult) => {
+    const studentSkills: StudentSkill[] = analysis.technicalSkills.map((ts, idx) => ({
+      id: `user_sk_${idx}_${Date.now()}`,
+      name: ts.name,
+      category: ts.category === 'framework' ? 'technical' : ts.category === 'tool' ? 'tool' : 'technical',
+      score: ts.score,
+      verified: true,
+      verificationStatus: 'Estimated from resume evidence',
+      lastUpdated: 'Today',
+      evidenceCount: 1,
+      evidence: [
+        {
+          type: 'resume',
+          title: `Detected in ${analysis.fileName}`,
+          score: ts.score,
+          date: analysis.uploadedAt,
+          verified: true,
+          statusText: 'Estimated from resume evidence',
+        },
+      ],
+      targetScore: 85,
+    }));
+
+    const dynamicProfile: StudentProfile = {
+      id: `std_user_${Date.now()}`,
+      name: analysis.name || 'Candidate Profile',
+      tagline: `${analysis.targetRole} • Extracted from ${analysis.fileName}`,
+      email: analysis.email || 'candidate@university.edu',
+      phone: analysis.phone || '+91 98765 43210',
+      rollNumber: '2026-USER-01',
+      college: analysis.college || 'Engineering Institute',
+      degree: analysis.degree || 'B.Tech / Equivalent',
+      department: 'Computer Science & Engineering',
+      year: 4,
+      cgpa: 8.5,
+      targetRole: analysis.targetRole || 'Backend Developer',
+      readinessScore: analysis.readinessScore,
+      technicalScore: analysis.scoreBreakdown.technicalSkills * 2,
+      softSkillScore: 78,
+      projectScore: analysis.scoreBreakdown.projects * 6.6,
+      interviewScore: 75,
+      skills: studentSkills,
+      bio: `Automated career intelligence profile constructed from verified resume evidence in ${analysis.fileName}.`,
+      github: 'https://github.com/',
+      linkedin: 'https://linkedin.com/in/',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      readinessTrend: [
+        { month: 'Baseline', score: analysis.readinessScore - 8 },
+        { month: 'Today', score: analysis.readinessScore },
+      ],
+      projects: analysis.projects.map((p) => ({
+        title: p.title,
+        description: p.description,
+        skills: p.skills,
+      })),
+      certifications: analysis.certifications.map((c) => ({
+        title: c,
+        issuer: 'Verified Credential Issuer',
+        date: '2025',
+        verified: true,
+        verificationStatus: 'Estimated from resume evidence',
+      })),
+      internships: analysis.internships.map((i) => ({
+        role: i.role,
+        company: i.company,
+        duration: i.duration || '4 Months',
+        description: 'Hands-on technical contributor',
+      })),
+      achievements: analysis.achievements,
+    };
+
+    setStudent(dynamicProfile);
+  };
+
+  /**
+   * Handle Genuine Resume Upload
+   */
+  const handleResumeUpload = (analysis: ResumeAnalysisResult) => {
+    setUserResumeProfile(analysis);
+    setActiveSessionMode('user');
+
+    // Add to version history
+    const newVersionNumber = resumeVersions.length + 1;
+    const newVersion: ResumeVersion = {
+      version: newVersionNumber,
+      analyzedDate: analysis.uploadedAt,
+      fileName: analysis.fileName,
+      targetRole: analysis.targetRole,
+      readinessScore: analysis.readinessScore,
+      skillsCount: analysis.technicalSkills.length,
+      gapsCount: 4,
+      analysis,
+    };
+
+    const updatedVersions = [newVersion, ...resumeVersions];
+    setResumeVersions(updatedVersions);
+
+    // Sync to active profile
+    syncUserResumeToProfile(analysis);
+
+    // Add confirmation notification
+    const newNotif: NotificationItem = {
+      id: `notif_upload_${Date.now()}`,
+      title: 'Resume Analyzed Successfully',
+      message: `Welcome, ${analysis.name}! Extracted ${analysis.technicalSkills.length} competencies. Career Readiness calculated at ${analysis.readinessScore}%.`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/resume-analyzer',
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+
+    try {
+      localStorage.setItem('sb_user_resume', JSON.stringify(analysis));
+      localStorage.setItem('sb_resume_versions', JSON.stringify(updatedVersions));
+      localStorage.setItem('sb_session_mode', 'user');
+    } catch {
+      // ignore
+    }
+  };
+
+  /**
+   * Set User Target Role
+   */
+  const setUserTargetRole = (newRole: string) => {
+    if (userResumeProfile) {
+      const updated = { ...userResumeProfile, targetRole: newRole };
+      setUserResumeProfile(updated);
+      setStudent((prev) => ({ ...prev, targetRole: newRole }));
+      try {
+        localStorage.setItem('sb_user_resume', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+    } else {
+      setStudent((prev) => ({ ...prev, targetRole: newRole }));
+    }
+  };
+
   const applyToOpportunity = (opportunityId: string): boolean => {
     const opp = opportunities.find((o) => o.id === opportunityId);
     if (!opp) return false;
 
-    // Check if already applied
-    const alreadyApplied = applications.some((a) => a.opportunityId === opportunityId);
-    if (alreadyApplied) return false;
+    if (applications.some((a) => a.opportunityId === opportunityId)) {
+      return false; // already applied
+    }
 
     const newApp: ApplicationItem = {
       id: `app_${Date.now()}`,
       opportunityId: opp.id,
       opportunityTitle: opp.title,
       company: opp.company,
-      appliedDate: new Date().toISOString().split('T')[0],
+      appliedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       status: 'Applied',
-      matchScore: opp.id === 'opp_1' ? 91 : Math.floor(Math.random() * 10) + 82,
-      notes: 'Application submitted via SkillBridge AI matching portal. Verified Skill Twin attached.',
+      matchScore: opp.id === 'opp_1' ? 91 : opp.id === 'opp_2' ? 84 : 78,
+      notes: 'Application submitted with live AI Skill Twin credentials.',
     };
 
     const updated = [newApp, ...applications];
     setApplications(updated);
+
+    const newNotif: NotificationItem = {
+      id: `notif_${Date.now()}`,
+      title: 'Application Submitted',
+      message: `Successfully applied for ${opp.title} at ${opp.company}.`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/student/applications',
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+
     try {
       localStorage.setItem('sb_applications', JSON.stringify(updated));
     } catch {
       // ignore
     }
 
-    // Notification for student
-    const newNotif: NotificationItem = {
-      id: `notif_${Date.now()}`,
-      title: 'Application Submitted',
-      message: `You successfully applied for ${opp.title} at ${opp.company}. Candidate Matcher updated.`,
-      time: 'Just now',
-      type: 'success',
-      read: false,
-      link: '/student/applications',
-    };
-    setNotifications((prev) => [newNotif, ...prev]);
-
     return true;
   };
 
-  const updateApplicationStatus = (applicationId: string, newStatus: ApplicationItem['status']) => {
-    setApplications((prev) => {
-      const updated = prev.map((app) =>
-        app.id === applicationId ? { ...app, status: newStatus } : app
-      );
-      try {
-        localStorage.setItem('sb_applications', JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-      return updated;
-    });
+  const updateApplicationStatus = (applicationId: string, status: ApplicationItem['status']) => {
+    setApplications((prev) =>
+      prev.map((app) => (app.id === applicationId ? { ...app, status } : app))
+    );
 
     const targetApp = applications.find((a) => a.id === applicationId);
+    if (targetApp) {
+      const statusNotif: NotificationItem = {
+        id: `notif_status_${Date.now()}`,
+        title: `Application Status: ${status}`,
+        message: `${targetApp.company} updated your application for ${targetApp.opportunityTitle} to "${status}".`,
+        time: 'Just now',
+        type: status === 'Rejected' ? 'warning' : 'success',
+        read: false,
+        link: '/student/applications',
+      };
+      setNotifications((prev) => [statusNotif, ...prev]);
+    }
+  };
+
+  const postOpportunity = (oppData: Omit<JobOpportunity, 'id' | 'postedDate'>) => {
+    const newOpp: JobOpportunity = {
+      ...oppData,
+      id: `opp_${Date.now()}`,
+      postedDate: new Date().toISOString().split('T')[0],
+    };
+
+    setOpportunities((prev) => [newOpp, ...prev]);
+
     const notif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: `Application Status Updated: ${newStatus}`,
-      message: `${targetApp?.company || 'Recruiter'} updated ${targetApp?.opportunityTitle || 'your application'} status to ${newStatus}.`,
+      title: 'New Opportunity Published',
+      message: `${oppData.company} posted a new position: ${oppData.title}.`,
       time: 'Just now',
-      type: 'success',
+      type: 'info',
       read: false,
-      link: '/student/applications',
+      link: '/student/opportunities',
     };
     setNotifications((prev) => [notif, ...prev]);
   };
 
-  const postOpportunity = (newOppData: Omit<JobOpportunity, 'id' | 'postedDate'>) => {
-    const createdOpp: JobOpportunity = {
-      ...newOppData,
-      id: `opp_${Date.now()}`,
-      postedDate: 'Just now',
-    };
-    setOpportunities((prev) => [createdOpp, ...prev]);
-
-    const newNotif: NotificationItem = {
-      id: `notif_${Date.now()}`,
-      title: 'New Opportunity Published',
-      message: `${createdOpp.title} at ${createdOpp.company} is now live and matching student candidates.`,
-      time: 'Just now',
-      type: 'info',
-      read: false,
-      link: '/industry/dashboard',
-    };
-    setNotifications((prev) => [newNotif, ...prev]);
-  };
-
   const toggleSimulatorAction = (actionId: string) => {
-    setSimulatorActions((prev) => {
-      const updated = prev.map((act) =>
-        act.id === actionId ? { ...act, completed: !act.completed } : act
-      );
-
-      // Deterministic calculation: base = 68%
-      const completedBoost = updated
-        .filter((a) => a.completed)
-        .reduce((sum, a) => sum + a.impactScore, 0);
-
-      const newScore = Math.min(96, 68 + completedBoost);
-      setStudent((s) => {
-        const newProfile = { ...s, readinessScore: newScore };
-        try {
-          localStorage.setItem('sb_student_profile', JSON.stringify(newProfile));
-        } catch {
-          // ignore
-        }
-        return newProfile;
-      });
-
-      return updated;
-    });
+    setSimulatorActions((prev) =>
+      prev.map((action) =>
+        action.id === actionId ? { ...action, completed: !action.completed } : action
+      )
+    );
   };
 
   const toggleRoadmapMilestone = (week: number) => {
-    setRoadmap((prev) => {
-      const updated = prev.map((m) =>
-        m.week === week ? { ...m, completed: !m.completed } : m
-      );
+    setRoadmap((prev) =>
+      prev.map((m) => (m.week === week ? { ...m, completed: !m.completed } : m))
+    );
 
-      // Completing milestones feeds back into Student Skill Twin
-      const targetMilestone = updated.find((m) => m.week === week);
-      if (targetMilestone?.completed) {
-        setStudent((prevStudent) => {
-          let updatedSkills = [...prevStudent.skills];
+    const targetMilestone = roadmap.find((m) => m.week === week);
+    if (targetMilestone) {
+      const willBeCompleted = !targetMilestone.completed;
+      if (willBeCompleted) {
+        setStudent((prev) => {
+          const updatedSkills = prev.skills.map((s) => {
+            if (targetMilestone.skillsImpacted.some((imp) => imp.toLowerCase() === s.name.toLowerCase())) {
+              return {
+                ...s,
+                score: Math.min(100, s.score + 15),
+                verified: true,
+                verificationStatus: 'Evidence Submitted' as const,
+                lastUpdated: 'Just now',
+                evidenceCount: s.evidenceCount + 1,
+              };
+            }
+            return s;
+          });
 
-          if (week === 1) {
-            // REST APIs completed
-            updatedSkills = updatedSkills.map((s) =>
-              s.name === 'REST APIs' ? { ...s, score: 70, verified: true, verificationStatus: 'Assessment Verified' } : s
-            );
-          } else if (week === 2) {
-            // FastAPI completed
-            updatedSkills = updatedSkills.map((s) =>
-              s.name === 'FastAPI' ? { ...s, score: 72, verified: true, verificationStatus: 'Assessment Verified' } : s
-            );
-          } else if (week === 4) {
-            // Docker completed
-            updatedSkills = updatedSkills.map((s) =>
-              s.name === 'Docker' ? { ...s, score: 68, verified: true, verificationStatus: 'Assessment Verified' } : s
-            );
-          }
-
-          const completedCount = updated.filter((m) => m.completed).length;
-          const newReadiness = Math.min(94, 68 + completedCount * 4);
-
-          const newProfile = {
-            ...prevStudent,
+          const newReadiness = Math.min(96, prev.readinessScore + 6);
+          return {
+            ...prev,
             skills: updatedSkills,
             readinessScore: newReadiness,
           };
-          try {
-            localStorage.setItem('sb_student_profile', JSON.stringify(newProfile));
-          } catch {
-            // ignore
-          }
-          return newProfile;
         });
 
-        // Add success notification
         const notif: NotificationItem = {
-          id: `notif_${Date.now()}`,
-          title: `Milestone Week ${week} Completed`,
-          message: `Great job! Your dynamic Skill Twin competency for ${targetMilestone.title} has been updated.`,
+          id: `notif_mile_${Date.now()}`,
+          title: 'Milestone Completed',
+          message: `Completed "${targetMilestone.title}". Your AI Skill Twin proficiency updated!`,
           time: 'Just now',
           type: 'success',
           read: false,
           link: '/student/skill-twin',
         };
-        setNotifications((n) => [notif, ...n]);
+        setNotifications((prev) => [notif, ...prev]);
       }
-
-      return updated;
-    });
+    }
   };
 
   const addExtractedSkillsToTwin = (newSkills: string[]) => {
     setStudent((prev) => {
       const existingNames = new Set(prev.skills.map((s) => s.name.toLowerCase()));
-      const addedItems = newSkills
+      const skillsToAdd: StudentSkill[] = newSkills
         .filter((s) => !existingNames.has(s.toLowerCase()))
-        .map((s) => ({
-          id: `sk_res_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        .map((s, idx) => ({
+          id: `skill_new_${idx}_${Date.now()}`,
           name: s,
           category: 'technical' as const,
           score: 75,
-          verified: false,
+          verified: true,
           verificationStatus: 'Evidence Submitted' as const,
-          lastUpdated: 'Extracted from Resume',
+          lastUpdated: 'Just now',
           evidenceCount: 1,
           evidence: [
             {
-              type: 'experience' as const,
-              title: `Demonstrated in verified Resume project parsing`,
+              type: 'resume' as const,
+              title: 'AI Resume Extraction',
+              score: 75,
               date: new Date().toISOString().split('T')[0],
               verified: true,
               statusText: 'Evidence Submitted' as const,
@@ -297,23 +434,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ],
         }));
 
-      const updated = {
+      const updated = [...prev.skills, ...skillsToAdd];
+      const newReadiness = Math.min(94, prev.readinessScore + Math.min(6, skillsToAdd.length * 2));
+
+      return {
         ...prev,
-        skills: [...prev.skills, ...addedItems],
-        readinessScore: Math.min(88, prev.readinessScore + Math.min(8, addedItems.length * 2)),
+        skills: updated,
+        readinessScore: newReadiness,
       };
-      try {
-        localStorage.setItem('sb_student_profile', JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-      return updated;
     });
 
     const notif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: 'Skill Twin Synchronized',
-      message: `Added ${newSkills.length} verified technologies from your resume to your dynamic Skill Twin.`,
+      title: 'Skills Synchronized',
+      message: `Added ${newSkills.length} verified competencies to your AI Skill Twin.`,
       time: 'Just now',
       type: 'success',
       read: false,
@@ -324,56 +458,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateAssessmentScore = (category: string, score: number) => {
     setStudent((prev) => {
-      let tech = prev.technicalScore;
-      let soft = prev.softSkillScore;
-      let prob = prev.skills.find((s) => s.name === 'Problem Solving')?.score || 84;
+      const boost = Math.round((score / 100) * 8);
+      const newReadiness = Math.min(96, Math.max(prev.readinessScore, prev.readinessScore + boost));
+      const newTech = category === 'technical' ? Math.max(prev.technicalScore, score) : prev.technicalScore;
 
-      if (category === 'Technical') tech = Math.round((tech + score) / 2);
-      if (category === 'Communication') soft = Math.round((soft + score) / 2);
-      if (category === 'Problem Solving') prob = score;
-
-      const updatedSkills = prev.skills.map((s) => {
-        if (s.name === 'Problem Solving') {
-          return {
-            ...s,
-            score: prob,
-            verificationStatus: 'Assessment Verified' as const,
-            lastUpdated: 'Just now (Assessment Verified)',
-            evidence: [
-              {
-                type: 'assessment' as const,
-                title: 'Live Skill Assessment Test',
-                score,
-                date: new Date().toISOString().split('T')[0],
-                verified: true,
-                statusText: 'Assessment Verified' as const,
-              },
-              ...s.evidence,
-            ],
-          };
-        }
-        return s;
-      });
-
-      const updated = {
+      return {
         ...prev,
-        technicalScore: tech,
-        softSkillScore: soft,
-        skills: updatedSkills,
-        readinessScore: Math.min(94, Math.round((tech + soft + prev.projectScore + prev.interviewScore) / 4)),
+        technicalScore: newTech,
+        readinessScore: newReadiness,
       };
-      try {
-        localStorage.setItem('sb_student_profile', JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-      return updated;
     });
 
     const notif: NotificationItem = {
       id: `notif_${Date.now()}`,
-      title: 'Skill Assessment Completed',
-      message: `Scored ${score}% in ${category}. Your dynamic Skill Twin readiness has increased!`,
+      title: 'Assessment Verified',
+      message: `Scored ${score}% in ${category} assessment. Readiness elevated to ${student.readinessScore}%.`,
       time: 'Just now',
       type: 'success',
       read: false,
@@ -383,83 +482,72 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const submitIndustryFeedback = (feedbackData: Omit<CompanyFeedbackRecord, 'id' | 'date'>) => {
-    const record: CompanyFeedbackRecord = {
+    const newFeedback: CompanyFeedbackRecord = {
       ...feedbackData,
-      id: `cfb_${Date.now()}`,
+      id: `fb_${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
     };
-    setCompanyFeedbacks((prev) => [record, ...prev]);
 
-    // Recalculate cohort gap dynamically in notifications
+    setCompanyFeedbacks((prev) => [newFeedback, ...prev]);
+
     const notif: NotificationItem = {
-      id: `notif_${Date.now()}`,
-      title: 'Feedback Added to Academia Intelligence',
-      message: `Evaluation for ${record.studentName} logged by ${record.company}. Docker & Deployment deficits flagged for institutional training.`,
+      id: `notif_fb_${Date.now()}`,
+      title: 'Corporate Feedback Ingested',
+      message: `${feedbackData.company} submitted interview feedback. Institutional gap diagnostics updated!`,
       time: 'Just now',
       type: 'info',
       read: false,
       link: '/admin/intelligence',
     };
     setNotifications((prev) => [notif, ...prev]);
-
-    // Also notify student
-    const studentNotif: NotificationItem = {
-      id: `notif_std_${Date.now()}`,
-      title: 'Post-Interview Evaluation Received',
-      message: `${record.company} submitted technical interview notes. Focus areas: Docker and Cloud Deployment.`,
-      time: 'Just now',
-      type: 'warning',
-      read: false,
-      link: '/student/dashboard',
-    };
-    setNotifications((prev) => [studentNotif, ...prev]);
   };
 
   const deployTrainingIntervention = (recommendationId: string) => {
     setTrainingRecommendations((prev) =>
-      prev.map((item) =>
-        item.id === recommendationId
-          ? { ...item, status: 'Approved' }
-          : item
+      prev.map((rec) =>
+        rec.id === recommendationId ? { ...rec, status: 'Approved' as const } : rec
       )
     );
 
-    const targetRec = trainingRecommendations.find((t) => t.id === recommendationId);
-    const notif: NotificationItem = {
-      id: `notif_${Date.now()}`,
-      title: 'Institutional Intervention Approved',
-      message: `${targetRec?.skill || 'Training Bootcamp'} has been approved! Expected cohort readiness gain: +${targetRec?.projectedReadinessBoost || 12}%.`,
-      time: 'Just now',
-      type: 'success',
-      read: false,
-      link: '/admin/training',
-    };
-    setNotifications((prev) => [notif, ...prev]);
+    const rec = trainingRecommendations.find((r) => r.id === recommendationId);
+    if (rec) {
+      const notif: NotificationItem = {
+        id: `notif_train_${Date.now()}`,
+        title: 'Training Intervention Scheduled',
+        message: `Approved "${rec.skill}" bootcamp for ${rec.enrolledCount || 124} students. Projected cohort gain: +${rec.projectedReadinessBoost}%.`,
+        time: 'Just now',
+        type: 'success',
+        read: false,
+        link: '/admin/training',
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
   };
 
   const generateNewTrainingPlan = (skill: string, cohort: string) => {
     const newPlan: TrainingRecommendationItem = {
       id: `tr_${Date.now()}`,
       priority: 'HIGH',
-      skill: `${skill} Acceleration Bootcamp`,
-      reason: `Automated AI synthesis triggered by recent industry evaluation deficits in ${cohort}.`,
-      recommendedAction: `5-Day intensive practical sprint on ${skill} with cloud sandbox environments and industry mentors.`,
+      skill,
+      reason: `Market deficit identified from corporate interview feedback across ${cohort}.`,
+      recommendedAction: `Organize 2-week intensive hands-on lab series with corporate partner mentoring.`,
       targetCohorts: [cohort],
-      enrolledCount: 124,
-      durationWeeks: 1,
-      projectedReadinessBoost: 12,
-      suggestedFormat: 'Hands-on 5-day lab',
-      industryMentor: 'Razorpay Cloud Infrastructure Team',
+      enrolledCount: 140,
+      durationWeeks: 2,
+      projectedReadinessBoost: 14,
+      suggestedFormat: 'Weekend Hands-on Lab',
+      industryMentor: 'Corporate Partner Lead',
       status: 'Approved',
     };
+
     setTrainingRecommendations((prev) => [newPlan, ...prev]);
 
     const notif: NotificationItem = {
-      id: `notif_${Date.now()}`,
-      title: 'Training Plan Generated & Approved',
-      message: `AI synthesized ${newPlan.skill} for ${cohort}. Curriculum intervention deployed.`,
+      id: `notif_plan_${Date.now()}`,
+      title: 'Curriculum Training Generated',
+      message: `Created training program for ${skill}.`,
       time: 'Just now',
-      type: 'success',
+      type: 'info',
       read: false,
       link: '/admin/training',
     };
@@ -473,8 +561,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetDemoData = () => {
-    setRoleState('student');
     setStudent(PRIMARY_STUDENT);
+    setActiveSessionMode('demo');
     setOpportunities(INITIAL_OPPORTUNITIES);
     setApplications(INITIAL_APPLICATIONS);
     setSimulatorActions(SIMULATOR_ACTIONS);
@@ -483,9 +571,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTrainingRecommendations(TRAINING_RECOMMENDATIONS);
     setNotifications(INITIAL_NOTIFICATIONS);
     try {
-      localStorage.removeItem('sb_demo_role');
-      localStorage.removeItem('sb_student_profile');
-      localStorage.removeItem('sb_applications');
+      localStorage.clear();
     } catch {
       // ignore
     }
@@ -497,6 +583,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         role,
         setRole,
         student,
+        activeSessionMode,
+        setSessionMode,
+        userResumeProfile,
+        resumeVersions,
+        handleResumeUpload,
+        setUserTargetRole,
         opportunities,
         applications,
         simulatorActions,

@@ -6,9 +6,13 @@ import {
   JobOpportunity,
   StudentProfile,
   TrainingRecommendationItem,
+  PersonalizedOpportunityMatch,
 } from '@/types';
 import { TARGET_ROLE_BENCHMARKS } from '@/data/seedData';
 
+/**
+ * Calculate Skill Gap for StudentSkill[]
+ */
 export function calculateSkillGap(
   studentSkills: StudentSkill[],
   roleName: string
@@ -79,6 +83,8 @@ export function calculateSkillGap(
       status,
       gapReason,
       recommendedAction,
+      gapPercentage: Math.max(0, Math.round(((req.targetScore - currentScore) / req.targetScore) * 100)),
+      priority: req.importance,
     });
   });
 
@@ -95,6 +101,105 @@ export function calculateSkillGap(
   };
 }
 
+/**
+ * Personalized Skill Gap Diagnostic for arbitrary user resume skills
+ */
+export function calculateSkillGapForResume(
+  userSkills: { name: string; score: number }[],
+  roleName: string
+): {
+  targetRole: string;
+  overallMatch: number;
+  strongSkills: { name: string; score: number; target: number }[];
+  moderateSkills: { name: string; score: number; target: number }[];
+  criticalGaps: SkillGapItem[];
+  gapItems: SkillGapItem[];
+} {
+  const benchmark =
+    TARGET_ROLE_BENCHMARKS[roleName] ||
+    TARGET_ROLE_BENCHMARKS['Backend Developer'];
+
+  const skillMap = new Map<string, number>();
+  userSkills.forEach((s) => skillMap.set(s.name.toLowerCase(), s.score));
+
+  const strongSkills: { name: string; score: number; target: number }[] = [];
+  const moderateSkills: { name: string; score: number; target: number }[] = [];
+  const criticalGaps: SkillGapItem[] = [];
+  const gapItems: SkillGapItem[] = [];
+
+  let totalWeight = 0;
+  let earnedWeight = 0;
+
+  benchmark.requiredSkills.forEach((req) => {
+    const weight = req.importance === 'High' ? 3 : req.importance === 'Medium' ? 2 : 1;
+    totalWeight += weight * req.targetScore;
+
+    let currentScore = 0;
+    const reqKey = req.skill.toLowerCase();
+
+    skillMap.forEach((score, name) => {
+      if (name === reqKey || reqKey.includes(name) || name.includes(reqKey)) {
+        currentScore = Math.max(currentScore, score);
+      }
+    });
+
+    earnedWeight += weight * currentScore;
+    const gapPercentage = Math.max(0, Math.round(((req.targetScore - currentScore) / req.targetScore) * 100));
+
+    let status: 'Acquired' | 'In Progress' | 'Missing';
+    let gapReason = '';
+    let recommendedAction = '';
+
+    if (currentScore >= req.targetScore * 0.8) {
+      status = 'Acquired';
+      gapReason = `Proficiency meets target requirements (${currentScore}% vs ${req.targetScore}%).`;
+      recommendedAction = 'Demonstrate capabilities via architecture reviews or code samples.';
+      strongSkills.push({ name: req.skill, score: currentScore, target: req.targetScore });
+    } else if (currentScore >= 40) {
+      status = 'In Progress';
+      gapReason = `Working knowledge exists (${currentScore}%), but employers look for production experience (${req.targetScore}%).`;
+      recommendedAction = `Build a hands-on project module featuring ${req.skill}.`;
+      moderateSkills.push({ name: req.skill, score: currentScore, target: req.targetScore });
+    } else {
+      status = 'Missing';
+      gapReason = `Identified as a critical competency gap for ${benchmark.role}.`;
+      recommendedAction = `Prioritize 2-week intensive learning sprint and complete a verifiable capstone in ${req.skill}.`;
+    }
+
+    const gapItem: SkillGapItem = {
+      skill: req.skill,
+      currentScore,
+      targetScore: req.targetScore,
+      importance: req.importance,
+      status,
+      gapReason,
+      recommendedAction,
+      gapPercentage,
+      priority: req.importance,
+    };
+
+    gapItems.push(gapItem);
+
+    if (status !== 'Acquired') {
+      criticalGaps.push(gapItem);
+    }
+  });
+
+  const overallMatch = Math.min(98, Math.max(45, Math.round((earnedWeight / totalWeight) * 100)));
+
+  return {
+    targetRole: benchmark.role,
+    overallMatch,
+    strongSkills,
+    moderateSkills,
+    criticalGaps,
+    gapItems,
+  };
+}
+
+/**
+ * Career Readiness Simulator
+ */
 export function simulateCareerReadiness(
   baseScore: number,
   actions: SimulatorAction[]
@@ -123,6 +228,9 @@ export function simulateCareerReadiness(
   };
 }
 
+/**
+ * Legacy Resume Extractor (for backwards compatibility)
+ */
 export function extractSkillsFromResume(text: string): {
   detectedSkills: string[];
   detectedProjectSkills: string[];
@@ -153,6 +261,9 @@ export function extractSkillsFromResume(text: string): {
   };
 }
 
+/**
+ * 5-Factor Candidate Match Scoring for Industry
+ */
 export function calculateCandidateMatchScore(
   student: StudentProfile,
   requiredSkills: string[]
@@ -205,6 +316,71 @@ export function calculateCandidateMatchScore(
   };
 }
 
+/**
+ * Match Opportunities for User's Extracted Skills with Explainability
+ */
+export function matchPersonalizedOpportunities(
+  userSkills: { name: string; score: number }[],
+  opportunities: JobOpportunity[],
+  targetRole?: string
+): PersonalizedOpportunityMatch[] {
+  const skillMap = new Map<string, number>();
+  userSkills.forEach((s) => skillMap.set(s.name.toLowerCase(), s.score));
+
+  const results: PersonalizedOpportunityMatch[] = opportunities.map((opp) => {
+    const matchedSkills: string[] = [];
+    const missingSkills: string[] = [];
+    const whyMatched: string[] = [];
+
+    opp.requiredSkills.forEach((reqSkill) => {
+      const lower = reqSkill.toLowerCase();
+      let matchedScore = 0;
+
+      skillMap.forEach((score, name) => {
+        if (name === lower || lower.includes(name) || name.includes(lower)) {
+          matchedScore = Math.max(matchedScore, score);
+        }
+      });
+
+      if (matchedScore >= 50) {
+        matchedSkills.push(reqSkill);
+        whyMatched.push(`✓ ${reqSkill} (${matchedScore}%) meets employer expectation`);
+      } else {
+        missingSkills.push(reqSkill);
+      }
+    });
+
+    const matchRatio = opp.requiredSkills.length > 0 ? matchedSkills.length / opp.requiredSkills.length : 0.7;
+    let computedScore = Math.round(matchRatio * 85 + (matchedSkills.length > 3 ? 10 : 5));
+
+    // Boost if opportunity matches target role
+    if (targetRole && opp.title.toLowerCase().includes(targetRole.toLowerCase().split(' ')[0])) {
+      computedScore = Math.min(95, computedScore + 5);
+    }
+
+    const matchScore = Math.min(96, Math.max(55, computedScore));
+
+    let recommendedAction = 'Ready to apply! Your verified competencies meet the primary job specification.';
+    if (missingSkills.length > 0) {
+      recommendedAction = `Upskill in ${missingSkills.slice(0, 2).join(' & ')} to elevate your placement match to 95%+.`;
+    }
+
+    return {
+      opportunity: opp,
+      matchScore,
+      matchedSkills,
+      missingSkills,
+      whyMatched: whyMatched.slice(0, 4),
+      recommendedAction,
+    };
+  });
+
+  return results.sort((a, b) => b.matchScore - a.matchScore);
+}
+
+/**
+ * AI Assistant Response Generator
+ */
 export function generateAssistantResponse(
   prompt: string,
   profile: StudentProfile
@@ -230,7 +406,7 @@ Closing these 4 specific competencies in the **Career Simulator** will lift your
   }
 
   if (query.includes('which internship') || query.includes('apply') || query.includes('opportunity')) {
-    return `Based on your live profile and 68% readiness, here are your optimal matches:
+    return `Based on your live profile and ${profile.readinessScore}% readiness, here are your optimal matches:
 
 1. **Backend Developer Intern @ Razorpay Software** — **87% - 91% Match**
    - **Why Matched**: Strong Python (90%) and SQL (82%) with verified repository commits.
@@ -245,13 +421,13 @@ Closing these 4 specific competencies in the **Career Simulator** will lift your
   }
 
   if (query.includes('improve my readiness') || query.includes('how can i improve')) {
-    return `To systematically climb from **68% to 91%** placement readiness:
+    return `To systematically climb from **${profile.readinessScore}% to 91%+** placement readiness:
 
-1. **Complete Action 1: Learn FastAPI & Pydantic** (+6% $\\to$ 74%)
-2. **Complete Action 2: Build REST API Project with Auth & DB** (+6% $\\to$ 80%)
-3. **Complete Action 3: Learn Docker Containerization** (+4% $\\to$ 84%)
-4. **Complete Action 4: Cloud Fundamentals** (+3% $\\to$ 87%)
-5. **Complete Action 5: Backend Internship / Capstone** (+4% $\\to$ 91%)
+1. **Complete Action 1: Learn FastAPI & Pydantic** (+6%)
+2. **Complete Action 2: Build REST API Project with Auth & DB** (+6%)
+3. **Complete Action 3: Learn Docker Containerization** (+4%)
+4. **Complete Action 4: Cloud Fundamentals** (+3%)
+5. **Complete Action 5: Backend Internship / Capstone** (+4%)
 
 You can test these interactive toggles right now in the **Career Readiness Simulator**!`;
   }
@@ -290,13 +466,13 @@ Total: **87/100 (High Fit Recommendation)**.`;
   }
 
   // Fallback
-  return `Hello Abdul! I am your **SkillBridge Career Copilot**, grounded in your verified **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
+  return `Hello ${profile.name.split(' ')[0]}! I am your **SkillBridge Career Copilot**, grounded in your verified **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
 
 You can ask me:
-- *"What skills am I missing for Backend Developer?"*
+- *"What skills am I missing for ${profile.targetRole}?"*
 - *"Which internship should I apply for?"*
 - *"How can I improve my readiness?"*
 - *"Create my 30-day learning plan."*
-- *"Why did I get an 87% opportunity match?"*
+- *"Why did I get an opportunity match?"*
 - *"Which project should I build next?"*`;
 }

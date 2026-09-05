@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'SkillBridge AI — Academia × Industry Intelligence Platform',
   description:
-    'AI-powered platform for skill mapping, internships, placements and academia-industry collaboration. SIH26044.',
+    'AI-powered platform for skill mapping, internships, placements and academia-industry collaboration. SIH 2026 Prototype • SIH26044.',
   keywords: [
     'SkillBridge AI',
     'SIH26044',
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     'Internships',
     'Placements',
     'Readiness Simulator',
+    'Resume Analyzer',
   ],
   authors: [{ name: 'SkillBridge AI Team' }],
   openGraph: {
@@ -34,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-slate-950 text-slate-100 min-h-screen antialiased`}>
+    <html lang="en" className="light">
+      <body className={`${inter.className} bg-[#f8fafc] text-slate-900 min-h-screen antialiased selection:bg-blue-600 selection:text-white`}>
         <AppProvider>
           {children}
         </AppProvider>

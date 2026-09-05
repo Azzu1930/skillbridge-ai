@@ -16,10 +16,11 @@ export type VerificationLabel =
   | 'Assessment Verified'
   | 'Evidence Submitted'
   | 'Certificate Added'
-  | 'Pending Verification';
+  | 'Pending Verification'
+  | 'Estimated from resume evidence';
 
 export interface SkillEvidenceItem {
-  type: 'project' | 'assessment' | 'certification' | 'experience';
+  type: 'project' | 'assessment' | 'certification' | 'experience' | 'resume';
   title: string;
   score?: number;
   date: string;
@@ -96,6 +97,7 @@ export interface TargetRoleBenchmark {
     skill: string;
     importance: 'High' | 'Medium' | 'Low';
     targetScore: number;
+    category?: 'Core' | 'Framework' | 'Infrastructure' | 'Architecture' | 'Tools';
   }[];
 }
 
@@ -107,6 +109,8 @@ export interface SkillGapItem {
   status: 'Acquired' | 'In Progress' | 'Missing';
   gapReason: string;
   recommendedAction: string;
+  priority?: 'High' | 'Medium' | 'Low';
+  gapPercentage?: number;
 }
 
 export interface SimulatorAction {
@@ -131,6 +135,8 @@ export interface RoadmapMilestone {
   skillsImpacted: string[];
   completed: boolean;
   deliverable: string;
+  suggestedProject?: string;
+  expectedGain?: string;
 }
 
 export interface JobOpportunity {
@@ -166,7 +172,7 @@ export interface ApplicationItem {
 
 export interface IndustrySkillDemandItem {
   skill: string;
-  growth: number; // percentage growth e.g. +42%
+  growth: number;
   demandCount: number;
   trend: 'up' | 'stable' | 'down';
   category: string;
@@ -180,7 +186,7 @@ export interface CandidateEvaluation {
   email: string;
   avatar: string;
   role: string;
-  matchScore: number; // 0-100 overall weighted
+  matchScore: number;
   readinessScore: number;
   matchedSkills: string[];
   missingSkills: string[];
@@ -188,11 +194,11 @@ export interface CandidateEvaluation {
   projectsCount: number;
   assessmentScore: number;
   scoreBreakdown: {
-    skillCompatibility: number; // out of 50
-    assessmentPerformance: number; // out of 15
-    projectRelevance: number; // out of 15
-    experience: number; // out of 10
-    evidenceStrength: number; // out of 10
+    skillCompatibility: number;
+    assessmentPerformance: number;
+    projectRelevance: number;
+    experience: number;
+    evidenceStrength: number;
   };
   explanation: {
     skillMatchRatio: string;
@@ -208,11 +214,11 @@ export interface CompanyFeedbackRecord {
   studentName: string;
   studentId?: string;
   role: string;
-  restApiRating: number; // 1-5
-  codingRating: number; // 1-5
-  communicationRating: number; // 1-5
-  problemSolvingRating: number; // 1-5
-  dockerRating: number; // 1-5
+  restApiRating: number;
+  codingRating: number;
+  communicationRating: number;
+  problemSolvingRating: number;
+  dockerRating: number;
   qualitativeComments: string;
   detectedGaps: string[];
   date: string;
@@ -241,4 +247,76 @@ export interface NotificationItem {
   type: 'info' | 'success' | 'warning';
   read: boolean;
   link?: string;
+}
+
+/* =========================================================================
+   Phase 3: Real Resume Analysis, Personalization & Monitoring Types
+========================================================================= */
+
+export interface ExtractedSkillItem {
+  name: string;
+  category: 'technical' | 'soft' | 'tool' | 'framework';
+  score: number; // 0-100 estimated proficiency
+  evidenceSnippet?: string;
+  label: 'Estimated from resume evidence';
+}
+
+export interface ResumeAnalysisResult {
+  id: string;
+  fileName: string;
+  fileSize: string;
+  fileType: 'pdf' | 'docx' | 'txt';
+  uploadedAt: string;
+  rawText: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  education: string;
+  degree?: string;
+  college?: string;
+  experienceYears: number;
+  technicalSkills: ExtractedSkillItem[];
+  softSkills: string[];
+  tools: string[];
+  projects: {
+    title: string;
+    description: string;
+    skills: string[];
+  }[];
+  certifications: string[];
+  internships: {
+    role: string;
+    company: string;
+    duration?: string;
+  }[];
+  achievements: string[];
+  targetRole: string;
+  readinessScore: number;
+  scoreBreakdown: {
+    technicalSkills: number; // out of 50
+    projects: number; // out of 15
+    experience: number; // out of 10
+    certifications: number; // out of 10
+    assessment: number; // out of 15
+  };
+}
+
+export interface ResumeVersion {
+  version: number;
+  analyzedDate: string;
+  fileName: string;
+  targetRole: string;
+  readinessScore: number;
+  skillsCount: number;
+  gapsCount: number;
+  analysis: ResumeAnalysisResult;
+}
+
+export interface PersonalizedOpportunityMatch {
+  opportunity: JobOpportunity;
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  whyMatched: string[];
+  recommendedAction: string;
 }
