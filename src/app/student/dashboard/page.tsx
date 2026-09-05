@@ -28,10 +28,12 @@ import {
 } from 'lucide-react';
 
 export default function StudentDashboardPage() {
-  const { student, opportunities, applications } = useApp();
+  const { student, opportunities, applications, internships, currentUser } = useApp();
 
   const topOpportunities = opportunities.slice(0, 3);
   const activeApplications = applications.slice(0, 3);
+  const activeInternship = internships.length > 0 ? internships[0] : null;
+  const isNewStudent = student.skills.length === 0;
 
   return (
     <AppShell>
@@ -44,11 +46,11 @@ export default function StudentDashboardPage() {
                 Student Intelligence Dashboard
               </span>
               <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-mono font-semibold">
-                CSE 4th Year
+                {student.department || 'Computer Science & Engineering'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Good morning, {(student?.name || 'Candidate').split(' ')[0]} 👋
+              Good morning, {(currentUser?.fullName || student?.name || 'Candidate').split(' ')[0]} 👋
             </h1>
             <p className="text-sm text-slate-600 mt-1">
               Your career readiness is improving. Target role:{' '}
@@ -73,6 +75,85 @@ export default function StudentDashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Guided Onboarding Banner for Brand-New Students */}
+        {isNewStudent && (
+          <div className="p-6 rounded-2xl bg-blue-50/70 border border-blue-200 text-slate-900 space-y-4 shadow-xs">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wide">
+                Welcome to SkillBridge AI — Quick Onboarding Setup
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
+              You have created a brand new student account! Complete these 3 quick steps to calculate your initial career readiness score, generate your AI Skill Twin, and unlock matched jobs and internships:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link
+                href="/resume-analyzer"
+                className="p-4 rounded-xl bg-white border border-blue-200 hover:border-blue-400 transition-all shadow-2xs group"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center">1</span>
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600">Upload Your Resume</span>
+                </div>
+                <p className="text-[11px] text-slate-500">Extract verified competencies and auto-generate DOCX/JSON reports.</p>
+              </Link>
+              <Link
+                href="/student/assessment"
+                className="p-4 rounded-xl bg-white border border-blue-200 hover:border-blue-400 transition-all shadow-2xs group"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center">2</span>
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600">Take Skill Quizzes</span>
+                </div>
+                <p className="text-[11px] text-slate-500">Prove technical skills to earn verified badges on your Skill Twin.</p>
+              </Link>
+              <Link
+                href="/student/opportunities"
+                className="p-4 rounded-xl bg-white border border-blue-200 hover:border-blue-400 transition-all shadow-2xs group"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center">3</span>
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600">Explore Openings</span>
+                </div>
+                <p className="text-[11px] text-slate-500">Apply to matching corporate internships with 1-click submission.</p>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Active Internship Track Banner */}
+        {activeInternship && (
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-green-500/10 to-teal-500/10 border border-emerald-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Briefcase className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    Active Internship Track
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {activeInternship.roleTitle} at {activeInternship.company}
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Supervisor: <strong className="text-slate-800">{activeInternship.supervisorName}</strong> • {activeInternship.milestones.filter(m => m.status === 'Approved').length} of {activeInternship.milestones.length} milestones verified
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/student/internship-progress"
+              className="px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 shrink-0"
+            >
+              <span>Open Internship Workspace</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
 
         {/* Top 4 KPI Metrics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -17,6 +17,8 @@ import {
   UserAccount,
   AuthSession,
   CareerReport,
+  ActiveInternshipRecord,
+  InternshipMilestoneItem,
 } from '@/types';
 import {
   PRIMARY_STUDENT,
@@ -28,6 +30,7 @@ import {
   TRAINING_RECOMMENDATIONS,
   INITIAL_NOTIFICATIONS,
   TARGET_ROLE_BENCHMARKS,
+  INITIAL_INTERNSHIPS,
 } from '@/data/seedData';
 import { compareResumeVersions } from '@/lib/resume-parser';
 import {
@@ -175,6 +178,35 @@ interface AppContextType {
     score: number;
     totalQuestions: number;
   }) => void;
+
+  // Phase 5 Internship Workspace & Recruitment Pipeline
+  internships: ActiveInternshipRecord[];
+  submitInternshipMilestone: (params: {
+    internshipId: string;
+    milestoneId: string;
+    deliverableUrl: string;
+    notes?: string;
+  }) => boolean;
+  approveInternshipMilestone: (params: {
+    internshipId: string;
+    milestoneId: string;
+    feedback: string;
+    rating: number;
+    approverName?: string;
+  }) => boolean;
+  advanceCandidatePipeline: (
+    applicationId: string,
+    newStatus: ApplicationItem['status'],
+    interviewDate?: string
+  ) => void;
+  hireCandidate: (params: {
+    candidateId: string;
+    candidateName: string;
+    candidateEmail: string;
+    roleTitle: string;
+    company: string;
+    stipend?: string;
+  }) => ActiveInternshipRecord;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -200,6 +232,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [authSession, setAuthSession] = useState<AuthSession | null>(null);
   const [userReports, setUserReports] = useState<CareerReport[]>([]);
   const [lastGeneratedReport, setLastGeneratedReport] = useState<CareerReport | null>(null);
+
+  // Phase 5: Internship Workspace & Active Placements State
+  const [internships, setInternships] = useState<ActiveInternshipRecord[]>(INITIAL_INTERNSHIPS);
 
   // Load from localStorage on mount (client-side only)
   useEffect(() => {
@@ -250,6 +285,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           } else {
             setApplications([]);
           }
+
+          // Load user-scoped active internships (zero leakage)
+          const userInternshipsKey = getScopedStorageKey(user.id, 'internships');
+          const savedInternships = localStorage.getItem(userInternshipsKey);
+          if (savedInternships) {
+            setInternships(JSON.parse(savedInternships));
+          } else {
+            setInternships([]);
+          }
           return;
         }
       }
@@ -258,6 +302,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedRole = localStorage.getItem('sb_demo_role') as UserRole;
       if (savedRole && ['student', 'industry', 'faculty', 'admin'].includes(savedRole)) {
         setRoleState(savedRole);
+      }
+      const savedDemoInternships = localStorage.getItem('sb_demo_internships');
+      if (savedDemoInternships) {
+        setInternships(JSON.parse(savedDemoInternships));
+      } else {
+        setInternships(INITIAL_INTERNSHIPS);
       }
       setStudent(PRIMARY_STUDENT);
       setActiveSessionMode('demo');
@@ -475,6 +525,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const appsKey = getScopedStorageKey(result.user.id, 'applications');
       const savedApps = localStorage.getItem(appsKey);
       setApplications(savedApps ? JSON.parse(savedApps) : []);
+
+      const intKey = getScopedStorageKey(result.user.id, 'internships');
+      const savedInts = localStorage.getItem(intKey);
+      setInternships(savedInts ? JSON.parse(savedInts) : []);
     } catch {
       // ignore
     }
@@ -519,6 +573,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUserResumeProfile(null);
     setResumeVersions([]);
     setApplications([]);
+    setInternships([]);
     setStudent(createCleanStudentProfile(result.user));
     return result.user;
   };
@@ -532,6 +587,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUserResumeProfile(null);
     setResumeVersions([]);
     setApplications(INITIAL_APPLICATIONS);
+    const savedDemoInternships = localStorage.getItem('sb_demo_internships');
+    setInternships(savedDemoInternships ? JSON.parse(savedDemoInternships) : INITIAL_INTERNSHIPS);
     setActiveSessionMode('demo');
     setRoleState('student');
     setStudent(PRIMARY_STUDENT);
@@ -1017,6 +1074,293 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const submitInternshipMilestone = (params: {
+    internshipId: string;
+    milestoneId: string;
+    deliverableUrl: string;
+    notes?: string;
+  }): boolean => {
+    setInternships((prev) => {
+      const updated = prev.map((internship) => {
+        if (internship.id !== params.internshipId) return internship;
+        const updatedMilestones = internship.milestones.map((m) => {
+          if (m.id !== params.milestoneId) return m;
+          return {
+            ...m,
+            status: 'Submitted' as const,
+            submittedDeliverableUrl: params.deliverableUrl,
+            submissionNotes: params.notes || 'Deliverable submitted for review.',
+            submissionDate: new Date().toISOString().split('T')[0],
+          };
+        });
+        return { ...internship, milestones: updatedMilestones };
+      });
+
+      if (currentUser) {
+        try {
+          localStorage.setItem(getScopedStorageKey(currentUser.id, 'internships'), JSON.stringify(updated));
+        } catch {}
+      } else {
+        try {
+          localStorage.setItem('sb_demo_internships', JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
+    const notif: NotificationItem = {
+      id: `notif_ms_sub_${Date.now()}`,
+      title: 'Milestone Deliverable Submitted',
+      message: `Your deliverable has been queued for faculty & supervisor review.`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/student/internship-progress',
+    };
+    setNotifications((prev) => [notif, ...prev]);
+    return true;
+  };
+
+  const approveInternshipMilestone = (params: {
+    internshipId: string;
+    milestoneId: string;
+    feedback: string;
+    rating: number;
+    approverName?: string;
+  }): boolean => {
+    let approvedSkills: string[] = [];
+    let milestoneTitle = '';
+
+    setInternships((prev) => {
+      const updated = prev.map((internship) => {
+        if (internship.id !== params.internshipId) return internship;
+        const updatedMilestones = internship.milestones.map((m) => {
+          if (m.id !== params.milestoneId) return m;
+          approvedSkills = m.skillsCovered;
+          milestoneTitle = m.title;
+          return {
+            ...m,
+            status: 'Approved' as const,
+            approvedDate: new Date().toISOString().split('T')[0],
+            mentorFeedback: params.feedback,
+            mentorRating: params.rating,
+            approvedBy:
+              params.approverName ||
+              (currentUser?.fullName
+                ? `${currentUser.fullName} (${currentUser.role})`
+                : 'Vikram Seth (Industry Supervisor)'),
+          };
+        });
+
+        const allApproved = updatedMilestones.every((m) => m.status === 'Approved');
+        return {
+          ...internship,
+          milestones: updatedMilestones,
+          status: allApproved ? ('Completed' as const) : internship.status,
+          finalGrade: allApproved ? ('A+' as const) : internship.finalGrade,
+        };
+      });
+
+      if (currentUser) {
+        try {
+          localStorage.setItem(getScopedStorageKey(currentUser.id, 'internships'), JSON.stringify(updated));
+        } catch {}
+      } else {
+        try {
+          localStorage.setItem('sb_demo_internships', JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
+    // Automatically credit Skill Twin with +15 verified score
+    if (approvedSkills.length > 0) {
+      setStudent((prev) => {
+        const updatedSkills = prev.skills.map((s) => {
+          if (approvedSkills.some((askill) => askill.toLowerCase() === s.name.toLowerCase())) {
+            return {
+              ...s,
+              score: Math.min(100, s.score + 15),
+              verified: true,
+              verificationStatus: 'Assessment Verified' as const,
+              lastUpdated: 'Today',
+              evidenceCount: s.evidenceCount + 1,
+            };
+          }
+          return s;
+        });
+
+        return {
+          ...prev,
+          skills: updatedSkills,
+          readinessScore: Math.min(100, prev.readinessScore + 5),
+        };
+      });
+    }
+
+    const notif: NotificationItem = {
+      id: `notif_ms_app_${Date.now()}`,
+      title: 'Milestone Approved & Credited',
+      message: `"${milestoneTitle}" approved with a ${params.rating}/5 rating! +15 verified points credited to your Skill Twin.`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/student/internship-progress',
+    };
+    setNotifications((prev) => [notif, ...prev]);
+    return true;
+  };
+
+  const hireCandidate = (params: {
+    candidateId: string;
+    candidateName: string;
+    candidateEmail: string;
+    roleTitle: string;
+    company: string;
+    stipend?: string;
+  }): ActiveInternshipRecord => {
+    const newInternship: ActiveInternshipRecord = {
+      id: `int_${Date.now()}`,
+      studentId: params.candidateId,
+      studentName: params.candidateName,
+      studentEmail: params.candidateEmail,
+      opportunityId: `opp_hired_${Date.now()}`,
+      roleTitle: params.roleTitle,
+      company: params.company,
+      companyLogo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
+      supervisorName: 'Technical Lead & Mentor',
+      supervisorEmail: `mentors@${params.company.toLowerCase().replace(/[^a-z]/g, '')}.com`,
+      facultyMentorName: 'Dr. Ramesh Sharma',
+      facultyMentorEmail: 'faculty.mentor@university.edu',
+      stipend: params.stipend || '₹45,000 / month',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 12 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      durationWeeks: 12,
+      status: 'Active',
+      completionCertificateId: `CERT-SB-${Math.random().toString(36).substring(2, 7).toUpperCase()}-2026`,
+      milestones: [
+        {
+          id: `ms_1_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 1,
+          title: 'Environment Setup & Codebase Onboarding',
+          description: 'Configure development container, clone project repository, pass linter and run unit tests.',
+          skillsCovered: ['Git', 'Docker', 'Python', 'FastAPI'],
+          deliverableRequired: 'Dev environment setup confirmation & initial PR.',
+          status: 'In Progress',
+        },
+        {
+          id: `ms_2_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 2,
+          title: 'Database Schema & Core Entity Models',
+          description: 'Design relational database schemas and implement ORM/migration models.',
+          skillsCovered: ['SQL', 'PostgreSQL', 'Database Design'],
+          deliverableRequired: 'Schema migration script and ER diagram.',
+          status: 'Not Started',
+        },
+        {
+          id: `ms_3_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 3,
+          title: 'REST API & Business Logic Integration',
+          description: 'Implement core endpoints with request validation, error handling, and unit test suites.',
+          skillsCovered: ['REST APIs', 'FastAPI', 'Problem Solving'],
+          deliverableRequired: 'API endpoints PR with passing tests.',
+          status: 'Not Started',
+        },
+        {
+          id: `ms_4_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 4,
+          title: 'Security, Authentication & Rate Limiting',
+          description: 'Enforce authentication, authorization roles, and rate limiters.',
+          skillsCovered: ['Cybersecurity', 'JWT', 'Redis'],
+          deliverableRequired: 'Auth middleware PR and security test checklist.',
+          status: 'Not Started',
+        },
+        {
+          id: `ms_5_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 5,
+          title: 'Integration Testing & Performance Tuning',
+          description: 'Benchmarking, query optimization, and test coverage >80%.',
+          skillsCovered: ['Pytest', 'Testing & CI/CD', 'Performance Tuning'],
+          deliverableRequired: 'Load test report & benchmark results.',
+          status: 'Not Started',
+        },
+        {
+          id: `ms_6_${Date.now()}`,
+          internshipId: `int_${Date.now()}`,
+          weekNumber: 6,
+          title: 'Production Staging & Capstone Demo',
+          description: 'Deploy to cloud staging environment and deliver final project walkthrough.',
+          skillsCovered: ['CI/CD', 'Cloud (AWS/GCP)', 'Communication'],
+          deliverableRequired: 'Live staging URL and demo presentation slides.',
+          status: 'Not Started',
+        },
+      ],
+    };
+
+    setInternships((prev) => {
+      const updated = [newInternship, ...prev];
+      if (currentUser) {
+        try {
+          localStorage.setItem(getScopedStorageKey(currentUser.id, 'internships'), JSON.stringify(updated));
+        } catch {}
+      } else {
+        try {
+          localStorage.setItem('sb_demo_internships', JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
+    const notif: NotificationItem = {
+      id: `notif_hire_${Date.now()}`,
+      title: 'Offer Accepted — Internship Active',
+      message: `Congratulations! Your active internship at ${params.company} has been initialized. Track milestones in your Internship Workspace!`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      link: '/student/internship-progress',
+    };
+    setNotifications((prev) => [notif, ...prev]);
+
+    return newInternship;
+  };
+
+  const advanceCandidatePipeline = (
+    applicationId: string,
+    newStatus: ApplicationItem['status'],
+    interviewDate?: string
+  ) => {
+    updateApplicationStatus(applicationId, newStatus);
+    if (interviewDate) {
+      setApplications((prev) =>
+        prev.map((a) => (a.id === applicationId ? { ...a, interviewDate } : a))
+      );
+    }
+
+    if (newStatus === 'Selected') {
+      const targetApp = applications.find((a) => a.id === applicationId);
+      if (targetApp) {
+        const existingInternship = internships.find(
+          (i) => i.company.toLowerCase() === targetApp.company.toLowerCase()
+        );
+        if (!existingInternship) {
+          hireCandidate({
+            candidateId: currentUser ? currentUser.id : 'std_demo_abdul',
+            candidateName: currentUser ? currentUser.fullName : student.name,
+            candidateEmail: currentUser ? currentUser.email : student.email,
+            roleTitle: targetApp.opportunityTitle,
+            company: targetApp.company,
+          });
+        }
+      }
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1068,6 +1412,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteReport,
         submitApplication,
         completeAssessment,
+
+        // Phase 5 Internship Workspace & Recruitment Pipeline
+        internships,
+        submitInternshipMilestone,
+        approveInternshipMilestone,
+        advanceCandidatePipeline,
+        hireCandidate,
       }}
     >
       {children}

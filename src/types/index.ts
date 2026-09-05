@@ -488,3 +488,77 @@ export interface ReportComparisonResult {
   newGaps: string[];
   opportunityMatchChange: number;
 }
+
+/* =========================================================================
+   Phase 5: Internship Workspace, Mentorship & Closed-Loop Workflow Types
+========================================================================= */
+
+export type MilestoneStatus =
+  | 'Not Started'
+  | 'In Progress'
+  | 'Submitted'
+  | 'Approved'
+  | 'Revision Requested';
+
+export interface InternshipMilestoneItem {
+  id: string;
+  internshipId: string;
+  weekNumber: number;
+  title: string;
+  description: string;
+  skillsCovered: string[];
+  deliverableRequired: string;
+  submittedDeliverableUrl?: string;
+  submissionNotes?: string;
+  submissionDate?: string;
+  status: MilestoneStatus;
+  mentorFeedback?: string;
+  mentorRating?: number; // 1 to 5
+  approvedDate?: string;
+  approvedBy?: string;
+}
+
+export interface ActiveInternshipRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  opportunityId: string;
+  roleTitle: string;
+  company: string;
+  companyLogo?: string;
+  supervisorName: string;
+  supervisorEmail: string;
+  facultyMentorName?: string;
+  facultyMentorEmail?: string;
+  stipend: string;
+  startDate: string;
+  endDate: string;
+  durationWeeks: number;
+  status: 'Active' | 'Under Review' | 'Completed';
+  completionCertificateId?: string;
+  finalGrade?: 'A+' | 'A' | 'B' | 'Pass';
+  finalFeedback?: string;
+  milestones: InternshipMilestoneItem[];
+}
+
+export interface SkillAssessmentAttempt {
+  id: string;
+  userId: string;
+  skillCategory: string;
+  score: number;
+  passed: boolean;
+  totalQuestions: number;
+  correctAnswers: number;
+  completedAt: string;
+}
+
+export type RecruitmentStage =
+  | 'Applied'
+  | 'Under Review'
+  | 'Shortlisted'
+  | 'Interview'
+  | 'Offer Extended'
+  | 'Hired'
+  | 'Rejected';
+

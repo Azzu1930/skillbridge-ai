@@ -122,6 +122,15 @@ export default function ApplicationsPage() {
                               <span className="truncate">{app.interviewDate}</span>
                             </div>
                           )}
+
+                          {app.status === 'Selected' && (
+                            <Link
+                              href="/student/internship-progress"
+                              className="w-full py-1 rounded bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold text-center block transition-all shadow-2xs"
+                            >
+                              Open Workspace →
+                            </Link>
+                          )}
                         </div>
                       ))
                     )}
@@ -165,7 +174,7 @@ export default function ApplicationsPage() {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
+                  <div className="text-right shrink-0 flex flex-col items-end gap-2">
                     <span
                       className={`text-xs font-bold px-3 py-1 rounded-lg uppercase ${
                         app.status === 'Shortlisted'
@@ -179,6 +188,15 @@ export default function ApplicationsPage() {
                     >
                       {app.status}
                     </span>
+
+                    {app.status === 'Selected' && (
+                      <Link
+                        href="/student/internship-progress"
+                        className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                      >
+                        <span>Internship Workspace →</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               ))}
