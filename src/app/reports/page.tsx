@@ -49,8 +49,13 @@ export default function ReportsListingPage() {
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Combine user reports or fallback to last generated report
-  const displayReports = userReports.length > 0 ? userReports : lastGeneratedReport ? [lastGeneratedReport] : [];
+  // Isolate authenticated user reports: authenticated users ONLY see their own reports.
+  // Guest/demo sessions may view their session's generated report.
+  const displayReports = currentUser
+    ? userReports
+    : lastGeneratedReport
+    ? [lastGeneratedReport]
+    : [];
 
   const handleDownloadDocx = async (report: CareerReport) => {
     try {
@@ -177,8 +182,8 @@ export default function ReportsListingPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-green-700">
                   Document Deliverables & Intelligence Archive
                 </span>
-                <span className="text-[11px] bg-green-50 border border-green-200 text-green-800 px-2 py-0.5 rounded-full font-semibold">
-                  Multi-Version Tracking
+                <span className="text-[11px] bg-green-50 border border-green-200 text-green-800 px-2.5 py-0.5 rounded-full font-semibold">
+                  {currentUser ? `AUTHENTICATED ACCOUNT: ${currentUser.fullName}` : 'DEMO MODE'}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-textPrimary tracking-tight">
@@ -228,10 +233,9 @@ export default function ReportsListingPage() {
             <div className="w-14 h-14 mx-auto rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
               <FileText className="w-7 h-7" />
             </div>
-            <h3 className="text-lg font-bold text-textPrimary">No Career Reports Found</h3>
+            <h3 className="text-lg font-bold text-textPrimary">No reports yet</h3>
             <p className="text-xs sm:text-sm text-muted max-w-md mx-auto">
-              Upload your resume in PDF, DOCX, or TXT format to automatically generate your first comprehensive
-              career readiness audit and download deliverables.
+              No reports yet. Upload your resume to generate your first personalized Career Intelligence Report.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Link
@@ -240,12 +244,14 @@ export default function ReportsListingPage() {
               >
                 Upload Resume Now
               </Link>
-              <button
-                onClick={handleLoadDemoReport}
-                className="px-5 py-2.5 text-xs font-semibold text-textPrimary bg-white hover:bg-green-50 border border-borderGreen rounded-xl transition-all shadow-xs"
-              >
-                Load Judge Demo Report
-              </button>
+              {!currentUser && (
+                <button
+                  onClick={handleLoadDemoReport}
+                  className="px-5 py-2.5 text-xs font-semibold text-textPrimary bg-white hover:bg-green-50 border border-borderGreen rounded-xl transition-all shadow-xs"
+                >
+                  Load Judge Demo Report
+                </button>
+              )}
             </div>
           </div>
         ) : (

@@ -7,6 +7,7 @@ import { useApp } from '@/context/AppContext';
 import {
   extractTextFromPdf,
   extractTextFromDocx,
+  extractTextFromDoc,
   parseResumeContent,
   compareResumeVersions,
 } from '@/lib/resume-parser';
@@ -51,6 +52,21 @@ import { getUserResumeRecord } from '@/lib/report-storage';
 
 type UploadState = 'idle' | 'uploading' | 'uploaded' | 'processing' | 'analyzing' | 'completed' | 'error';
 
+const TWELVE_STEPS = [
+  'Reading and validating resume document structure',
+  'Parsing document byte stream and font maps',
+  'Extracting selectable text layers',
+  'Segmenting document sections (Education, Experience, Skills)',
+  'Cross-referencing against 150+ technology taxonomy',
+  'Calculating competency proficiency scores & evidence snippets',
+  'Detecting projects, repositories & verified credentials',
+  'Computing deterministic 5-factor career readiness',
+  'Benchmarking skill gaps against target industry role',
+  'Calculating explainable job opportunity matches',
+  'Compiling 40-attribute persistent career intelligence report',
+  'Finalizing downloadable Word (.DOCX) and JSON deliverables',
+];
+
 export default function ResumeAnalyzerPage() {
   const {
     currentUser,
@@ -66,22 +82,16 @@ export default function ResumeAnalyzerPage() {
 
   // File state
   const [file, setFile] = useState<File | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploadState, setUploadState] = useState<UploadState>(userResumeProfile ? 'completed' : 'idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [activeReport, setActiveReport] = useState<CareerReport | null>(lastGeneratedReport || null);
   const [downloadingDocx, setDownloadingDocx] = useState(false);
 
-  const [pipelineSteps, setPipelineSteps] = useState<{ label: string; status: 'pending' | 'active' | 'done' }[]>([
-    { label: 'Reading and validating resume document structure', status: 'pending' },
-    { label: 'Extracting candidate text layer and layout elements', status: 'pending' },
-    { label: 'Identifying technical skills & proficiency evidence', status: 'pending' },
-    { label: 'Detecting project repositories & academic credentials', status: 'pending' },
-    { label: 'Cross-referencing against industry benchmark taxonomy', status: 'pending' },
-    { label: 'Computing deterministic 5-factor readiness & skill gaps', status: 'pending' },
-    { label: 'Compiling 40-attribute persistent career intelligence report', status: 'pending' },
-    { label: 'Generating downloadable Word document (.docx) & JSON data', status: 'pending' },
-  ]);
+  const [pipelineSteps, setPipelineSteps] = useState<{ label: string; status: 'pending' | 'active' | 'done' }[]>(
+    TWELVE_STEPS.map((label) => ({ label, status: 'pending' }))
+  );
 
   // Current analysis state (defaults to saved user profile if available)
   const [analysis, setAnalysis] = useState<ResumeAnalysisResult | null>(userResumeProfile || null);
@@ -109,13 +119,17 @@ export default function ResumeAnalyzerPage() {
     e.preventDefault();
     e.stopPropagation();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processSelectedFile(e.dataTransfer.files[0]);
+      const f = e.dataTransfer.files[0];
+      setPendingFile(f);
+      setErrorMessage('');
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      processSelectedFile(e.target.files[0]);
+      const f = e.target.files[0];
+      setPendingFile(f);
+      setErrorMessage('');
     }
   };
 
@@ -123,9 +137,9 @@ export default function ResumeAnalyzerPage() {
     setErrorMessage('');
     const ext = selectedFile.name.split('.').pop()?.toLowerCase();
 
-    if (!['pdf', 'docx', 'txt'].includes(ext || '')) {
+    if (!['pdf', 'doc', 'docx', 'txt'].includes(ext || '')) {
       setUploadState('error');
-      setErrorMessage('Unsupported format. Please upload a PDF, DOCX, or TXT file (up to 10 MB).');
+      setErrorMessage('Unsupported format. Please upload a PDF, DOC, DOCX, or TXT file (up to 10 MB).');
       return;
     }
 
@@ -136,8 +150,10 @@ export default function ResumeAnalyzerPage() {
     }
 
     setFile(selectedFile);
+    setPendingFile(selectedFile);
     setUploadState('uploading');
     setUploadProgress(0);
+    setPipelineSteps(TWELVE_STEPS.map((label) => ({ label, status: 'pending' })));
 
     // Read Data URL concurrently so original file is permanently downloadable
     let fileDataUrl: string | undefined = undefined;
@@ -153,16 +169,16 @@ export default function ResumeAnalyzerPage() {
       // Fallback
     }
 
-    // Simulate upload progress
+    // Progress bar animation
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => {
         if (prev >= 90) {
           clearInterval(progressInterval);
           return 95;
         }
-        return prev + 20;
+        return prev + 15;
       });
-    }, 80);
+    }, 60);
 
     try {
       const arrayBuffer = await selectedFile.arrayBuffer();
@@ -170,89 +186,113 @@ export default function ResumeAnalyzerPage() {
       setUploadProgress(100);
       setUploadState('uploaded');
 
-      // Begin Real Text Extraction & Pipeline
-      setTimeout(async () => {
-        setUploadState('processing');
-        updateStep(0, 'done');
-        updateStep(1, 'active');
+      // Begin 12-Step Animated Pipeline
+      setUploadState('processing');
 
-        let extractedText = '';
-        try {
-          if (ext === 'pdf') {
-            extractedText = await extractTextFromPdf(arrayBuffer);
-          } else if (ext === 'docx') {
-            extractedText = await extractTextFromDocx(arrayBuffer);
-          } else {
-            const decoder = new TextDecoder('utf-8');
-            extractedText = decoder.decode(arrayBuffer);
-          }
-        } catch (err: any) {
-          setUploadState('error');
-          setErrorMessage(err.message || 'Unable to extract readable text. Please upload a text-based document.');
-          return;
+      const setStepStatus = (index: number, status: 'pending' | 'active' | 'done') => {
+        setPipelineSteps((prev) => prev.map((s, i) => (i === index ? { ...s, status } : s)));
+      };
+
+      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      // Step 0: Reading structure
+      setStepStatus(0, 'active');
+      await delay(120);
+      setStepStatus(0, 'done');
+
+      // Step 1: Parsing byte stream & font maps
+      setStepStatus(1, 'active');
+      await delay(120);
+      setStepStatus(1, 'done');
+
+      // Step 2: Extracting selectable text layers
+      setStepStatus(2, 'active');
+      let extractedText = '';
+      try {
+        if (ext === 'pdf') {
+          extractedText = await extractTextFromPdf(arrayBuffer);
+        } else if (ext === 'docx') {
+          extractedText = await extractTextFromDocx(arrayBuffer);
+        } else if (ext === 'doc') {
+          extractedText = await extractTextFromDoc(arrayBuffer);
+        } else {
+          const decoder = new TextDecoder('utf-8');
+          extractedText = decoder.decode(arrayBuffer);
         }
+      } catch (err: any) {
+        setUploadState('error');
+        setErrorMessage(
+          err.message || "We couldn't extract selectable text from this PDF. Please upload a text-based PDF or DOCX."
+        );
+        return;
+      }
+      setStepStatus(2, 'done');
 
-        updateStep(1, 'done');
-        updateStep(2, 'active');
+      // Step 3: Segmenting sections
+      setStepStatus(3, 'active');
+      await delay(100);
+      setStepStatus(3, 'done');
 
-        // Step 2 -> Step 3
-        setTimeout(() => {
-          updateStep(2, 'done');
-          updateStep(3, 'active');
+      // Step 4: Cross-referencing against 150+ taxonomy
+      setStepStatus(4, 'active');
+      await delay(100);
+      setStepStatus(4, 'done');
 
-          setTimeout(() => {
-            updateStep(3, 'done');
-            updateStep(4, 'active');
+      // Step 5: Calculating competency scores & evidence snippets
+      setStepStatus(5, 'active');
+      await delay(100);
+      setStepStatus(5, 'done');
 
-            const fileSizeFormatted = (selectedFile.size / 1024).toFixed(0) + ' KB';
-            const parsedResult = parseResumeContent(extractedText, {
-              fileName: selectedFile.name,
-              fileSize: fileSizeFormatted,
-              fileType: ext as any,
-            });
+      // Step 6: Detecting projects, repositories & credentials
+      setStepStatus(6, 'active');
+      const fileSizeFormatted = (selectedFile.size / 1024).toFixed(0) + ' KB';
+      const parsedResult = parseResumeContent(extractedText, {
+        fileName: selectedFile.name,
+        fileSize: fileSizeFormatted,
+        fileType: ext as any,
+      });
+      await delay(100);
+      setStepStatus(6, 'done');
 
-            setTimeout(() => {
-              updateStep(4, 'done');
-              updateStep(5, 'active');
+      // Step 7: Computing deterministic 5-factor readiness
+      setStepStatus(7, 'active');
+      await delay(100);
+      setStepStatus(7, 'done');
 
-              setTimeout(() => {
-                updateStep(5, 'done');
-                updateStep(6, 'active');
+      // Step 8: Benchmarking skill gaps
+      setStepStatus(8, 'active');
+      await delay(100);
+      setStepStatus(8, 'done');
 
-                const compiledReport = handleResumeUpload(parsedResult, {
-                  fileName: selectedFile.name,
-                  fileSize: fileSizeFormatted,
-                  fileType: ext as any,
-                  fileDataUrl,
-                });
+      // Step 9: Calculating explainable opportunity matches
+      setStepStatus(9, 'active');
+      await delay(100);
+      setStepStatus(9, 'done');
 
-                setTimeout(() => {
-                  updateStep(6, 'done');
-                  updateStep(7, 'active');
+      // Step 10: Compiling 40-attribute persistent career report
+      setStepStatus(10, 'active');
+      const compiledReport = handleResumeUpload(parsedResult, {
+        fileName: selectedFile.name,
+        fileSize: fileSizeFormatted,
+        fileType: ext as any,
+        fileDataUrl,
+      });
+      await delay(140);
+      setStepStatus(10, 'done');
 
-                  setTimeout(() => {
-                    updateStep(7, 'done');
-                    setAnalysis(parsedResult);
-                    setActiveReport(compiledReport);
-                    setUploadState('completed');
-                  }, 300);
-                }, 300);
-              }, 300);
-            }, 300);
-          }, 300);
-        }, 300);
-      }, 250);
+      // Step 11: Finalizing deliverables
+      setStepStatus(11, 'active');
+      await delay(140);
+      setStepStatus(11, 'done');
+
+      setAnalysis(parsedResult);
+      setActiveReport(compiledReport);
+      setUploadState('completed');
     } catch (err: any) {
       clearInterval(progressInterval);
       setUploadState('error');
       setErrorMessage(err.message || 'Failed to process file.');
     }
-  };
-
-  const updateStep = (index: number, status: 'pending' | 'active' | 'done') => {
-    setPipelineSteps((prev) =>
-      prev.map((step, i) => (i === index ? { ...step, status } : step))
-    );
   };
 
   // Quick load sample resume for instant evaluator testing
@@ -424,7 +464,7 @@ Certifications:
 
         {/* Upload Area (Shown when idle, uploading, or processing) */}
         {(!analysis || uploadState !== 'completed') && (
-          <div className="bg-white border border-borderGreen rounded-2xl p-6 sm:p-8 shadow-xs">
+          <div className="bg-white border border-borderGreen rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
@@ -438,7 +478,7 @@ Certifications:
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.docx,.txt"
+                accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -457,10 +497,10 @@ Certifications:
                   </p>
                 </div>
 
-                <div className="flex items-center justify-center gap-4 text-[11px] text-muted font-medium">
-                  <span className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-3 text-[11px] text-muted font-medium flex-wrap">
+                  <span className="flex items-center gap-1 text-slate-700 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                    PDF, DOCX, TXT
+                    PDF, DOC, DOCX, TXT
                   </span>
                   <span>•</span>
                   <span>Max 10 MB</span>
@@ -473,9 +513,63 @@ Certifications:
               </div>
             </div>
 
+            {/* Selected File Confirmation & Trigger Bar */}
+            {uploadState === 'idle' && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-canvas border border-borderGreen">
+                {pendingFile ? (
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="p-2.5 rounded-lg bg-green-100 text-green-800 shrink-0">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-textPrimary truncate">{pendingFile.name}</p>
+                      <p className="text-[11px] text-muted">
+                        {((pendingFile.size || 0) / 1024).toFixed(0)} KB • Ready for extraction
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span>Select or drop a resume above to begin career intelligence analysis</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  {pendingFile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold border border-slate-200 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!pendingFile}
+                    onClick={() => {
+                      if (pendingFile) processSelectedFile(pendingFile);
+                    }}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-xs ${
+                      pendingFile
+                        ? 'bg-green-700 hover:bg-green-800 text-white cursor-pointer shadow-green-700/20 hover:scale-[1.01]'
+                        : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>{pendingFile ? 'Analyze Resume' : 'Analyze Resume (Choose a file first)'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Upload Progress & Pipeline */}
             {(uploadState === 'uploading' || uploadState === 'uploaded' || uploadState === 'processing') && (
-              <div className="mt-6 p-6 rounded-xl bg-canvas border border-borderGreen space-y-4">
+              <div className="p-6 rounded-xl bg-canvas border border-borderGreen space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-green-100 text-green-800">
@@ -534,13 +628,40 @@ Certifications:
               </div>
             )}
 
-            {/* Error Message */}
+            {/* Error Message with Actionable Retry Buttons */}
             {uploadState === 'error' && (
-              <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 text-xs text-red-700">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold block mb-0.5">Unable to process this file</span>
-                  <span>{errorMessage}</span>
+              <div className="p-5 rounded-xl bg-red-50 border border-red-200 space-y-3">
+                <div className="flex items-start gap-3 text-xs text-red-700">
+                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold block text-sm text-red-900">Unable to process this file</span>
+                    <p className="text-red-700 leading-relaxed">{errorMessage}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-red-200">
+                  {pendingFile && (
+                    <button
+                      type="button"
+                      onClick={() => processSelectedFile(pendingFile)}
+                      className="px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Try Again</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadState('idle');
+                      setErrorMessage('');
+                      setPendingFile(null);
+                      setFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-300 transition-colors cursor-pointer"
+                  >
+                    Upload Another Resume
+                  </button>
                 </div>
               </div>
             )}

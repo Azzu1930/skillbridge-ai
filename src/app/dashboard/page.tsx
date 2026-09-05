@@ -44,14 +44,17 @@ export default function UserDashboardPage() {
   const [downloadingDocx, setDownloadingDocx] = useState(false);
   const [appliedIds, setAppliedIds] = useState<Record<string, boolean>>({});
 
-  // Active report resolution: prioritize userReports[0], then lastGeneratedReport, then synthesize demo report
-  const activeReport = userReports[0] || lastGeneratedReport || null;
+  // Active report resolution: prioritize userReports[0] if authenticated; only fallback to lastGeneratedReport if NOT authenticated (guest mode)
+  const activeReport = currentUser
+    ? (userReports.length > 0 ? userReports[0] : null)
+    : (lastGeneratedReport || null);
 
+  const isNewUser = !!currentUser && userReports.length === 0;
   const candidateName = currentUser?.fullName || student.name;
-  const targetRole = activeReport?.targetRole || currentUser?.targetRole || student.targetRole;
-  const readinessScore = activeReport?.readinessScore ?? student.readinessScore;
-  const skillCount = activeReport?.skills.length ?? student.skills.length;
-  const criticalGapsCount = activeReport?.criticalGaps.length ?? 2;
+  const targetRole = activeReport?.targetRole || currentUser?.targetRole || (currentUser ? 'Role Pending Analysis' : student.targetRole);
+  const readinessScore = activeReport?.readinessScore ?? (currentUser ? 0 : student.readinessScore);
+  const skillCount = activeReport?.skills.length ?? (currentUser ? 0 : student.skills.length);
+  const criticalGapsCount = activeReport?.criticalGaps.length ?? (currentUser ? 0 : 2);
   const matchedOpportunities = activeReport?.opportunities || [];
 
   const handleDownloadDocx = async () => {
@@ -110,15 +113,16 @@ export default function UserDashboardPage() {
                 </span>
                 <span className="text-[11px] bg-green-50 border border-green-200 text-green-800 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-green-600" />
-                  {isAuthenticated ? 'Authenticated Account' : 'Demo Mode Active'}
+                  {isAuthenticated ? `AUTHENTICATED: ${currentUser?.email}` : 'DEMO MODE'}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-textPrimary tracking-tight">
-                Welcome back, {candidateName.split(' ')[0]} 👋
+                Welcome{currentUser ? `, ${candidateName.split(' ')[0]}` : ' to SkillBridge AI'} 👋
               </h1>
               <p className="text-sm text-muted mt-1">
-                Your career twin is benchmarked against industry standards. Target Role:{' '}
-                <span className="text-green-700 font-bold">{targetRole}</span>
+                {isNewUser
+                  ? 'Your candidate profile is clean. Upload your resume to begin your AI Career Twin benchmark.'
+                  : `Your career twin is benchmarked against industry standards. Target Role: ${targetRole}`}
               </p>
             </div>
 
@@ -128,7 +132,7 @@ export default function UserDashboardPage() {
                 className="px-4 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-xs flex items-center gap-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Upload New Resume</span>
+                <span>Upload Resume</span>
               </Link>
               <Link
                 href="/reports"
@@ -141,7 +145,30 @@ export default function UserDashboardPage() {
           </div>
         </div>
 
-        {/* PROMINENT REPORT DOWNLOAD CENTER CARD (Part 4 Spec) */}
+        {/* Clean New User Notification Banner */}
+        {isNewUser && (
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-dashed border-borderGreen shadow-xs text-center space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mx-auto">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-textPrimary">Your Career Intelligence Profile is Ready</h3>
+            <p className="text-xs sm:text-sm text-muted max-w-lg mx-auto">
+              Welcome, {candidateName}! You currently have 0 resumes, 0 reports, and 0 job applications.
+              Upload your resume in PDF, DOC, or DOCX format to compute your personalized 5-factor career readiness score, identify competency gaps, and unlock instant deliverables.
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/resume-analyzer"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-xs inline-flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Upload Your First Resume</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* PROMINENT REPORT DOWNLOAD CENTER CARD */}
         <div className="p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 text-white shadow-md border border-green-700 relative overflow-hidden">
           <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10">
@@ -157,12 +184,12 @@ export default function UserDashboardPage() {
                   )}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  Download Official Career Intelligence Deliverables
+                  {activeReport ? 'Download Official Career Intelligence Deliverables' : 'Career Intelligence Deliverables'}
                 </h2>
                 <p className="text-xs sm:text-sm text-green-100 leading-relaxed">
-                  Export complete candidate intelligence reports including evidence-based skill audits,
-                  5-factor readiness breakdown, critical gap benchmarks, and tailored career roadmaps.
-                  Compatible with Microsoft Word, Google Docs, and enterprise applicant tracking systems.
+                  {activeReport
+                    ? 'Export complete candidate intelligence reports including evidence-based skill audits, 5-factor readiness breakdown, critical gap benchmarks, and tailored career roadmaps. Compatible with Microsoft Word, Google Docs, and enterprise applicant tracking systems.'
+                    : 'Upload your resume to generate your official 40-attribute career intelligence report, complete with 5-factor readiness calculations, verified skill evidence, and publication-ready Word (.docx) downloads.'}
                 </p>
                 {activeReport && (
                   <div className="pt-1 flex flex-wrap items-center gap-3 text-xs text-green-200">
@@ -177,40 +204,52 @@ export default function UserDashboardPage() {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 lg:w-96 shrink-0">
-                <Link
-                  href={activeReport ? `/reports/view?id=${activeReport.id}` : '/reports/view'}
-                  className="px-4 py-3 bg-white hover:bg-green-50 text-green-900 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
-                >
-                  <ExternalLink className="w-4 h-4 text-green-700" />
-                  <span>View Full Web Report</span>
-                </Link>
+                {activeReport ? (
+                  <>
+                    <Link
+                      href={`/reports/view?id=${activeReport.id}`}
+                      className="px-4 py-3 bg-white hover:bg-green-50 text-green-900 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                    >
+                      <ExternalLink className="w-4 h-4 text-green-700" />
+                      <span>View Full Web Report</span>
+                    </Link>
 
-                <button
-                  onClick={handleDownloadDocx}
-                  disabled={downloadingDocx || !activeReport}
-                  className="px-4 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-50"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{downloadingDocx ? 'Compiling Word...' : 'Download .DOCX'}</span>
-                </button>
+                    <button
+                      onClick={handleDownloadDocx}
+                      disabled={downloadingDocx}
+                      className="px-4 py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>{downloadingDocx ? 'Compiling Word...' : 'Download .DOCX'}</span>
+                    </button>
 
-                <button
-                  onClick={handleDownloadJson}
-                  disabled={!activeReport}
-                  className="px-4 py-3 bg-green-950/60 hover:bg-green-950 text-green-100 border border-white/20 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-50"
-                >
-                  <FileCode className="w-4 h-4 text-green-400" />
-                  <span>Download .JSON Data</span>
-                </button>
+                    <button
+                      onClick={handleDownloadJson}
+                      className="px-4 py-3 bg-green-950/60 hover:bg-green-950 text-green-100 border border-white/20 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                    >
+                      <FileCode className="w-4 h-4 text-green-400" />
+                      <span>Download .JSON Data</span>
+                    </button>
 
-                <button
-                  onClick={handleDownloadResume}
-                  disabled={!activeReport}
-                  className="px-4 py-3 bg-green-950/60 hover:bg-green-950 text-green-100 border border-white/20 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-50"
-                >
-                  <Paperclip className="w-4 h-4 text-green-400" />
-                  <span>Original Resume</span>
-                </button>
+                    <button
+                      onClick={handleDownloadResume}
+                      className="px-4 py-3 bg-green-950/60 hover:bg-green-950 text-green-100 border border-white/20 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                    >
+                      <Paperclip className="w-4 h-4 text-green-400" />
+                      <span>Original Resume</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="col-span-2 space-y-2">
+                    <Link
+                      href="/resume-analyzer"
+                      className="w-full px-4 py-3 bg-white hover:bg-green-50 text-green-900 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                    >
+                      <Sparkles className="w-4 h-4 text-green-700" />
+                      <span>Upload Resume to Unlock Downloads</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -408,7 +447,18 @@ export default function UserDashboardPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted">Upload a resume to calculate full 5-factor readiness breakdown.</p>
+              <div className="p-6 text-center rounded-xl bg-canvas border border-dashed border-borderGreen space-y-2">
+                <Sparkles className="w-6 h-6 text-green-600 mx-auto" />
+                <p className="text-xs font-bold text-textPrimary">Readiness Breakdown Pending</p>
+                <p className="text-[11px] text-muted leading-relaxed">
+                  Upload your resume to calculate your deterministic 5-factor readiness score (Technical Skills, Projects, Experience, Certifications, Assessments).
+                </p>
+                <div className="pt-1">
+                  <Link href="/resume-analyzer" className="text-xs text-green-700 font-bold hover:underline">
+                    Analyze resume now →
+                  </Link>
+                </div>
+              </div>
             )}
 
             {/* Quick Actions Bar */}
@@ -453,33 +503,37 @@ export default function UserDashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {(matchedOpportunities.length > 0
-                ? matchedOpportunities.slice(0, 3)
-                : opportunities.slice(0, 3).map((o) => ({
-                    opportunity: o,
-                    matchScore: 88,
-                    matchedSkills: ['Node.js', 'PostgreSQL', 'Docker'],
-                    missingSkills: ['Redis'],
-                    whyMatched: 'High overlap in backend engineering stack',
-                    recommendedAction: 'Apply now',
-                  }))
-              ).map((match, idx) => {
-                const opp = match.opportunity;
-                const isApplied = appliedIds[opp.id];
-                return (
-                  <div
-                    key={opp.id || idx}
-                    className="p-4 rounded-xl border border-borderGreen bg-canvas hover:border-green-300 transition-all space-y-2.5"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="text-xs font-bold text-textPrimary">{opp.title}</h4>
-                        <p className="text-[11px] text-muted">{opp.company} • {opp.location}</p>
+              {matchedOpportunities.length === 0 ? (
+                <div className="p-6 text-center rounded-xl bg-canvas border border-dashed border-borderGreen space-y-2">
+                  <Briefcase className="w-6 h-6 text-green-600 mx-auto" />
+                  <p className="text-xs font-bold text-textPrimary">No Matched Roles Yet</p>
+                  <p className="text-[11px] text-muted leading-relaxed">
+                    Upload your resume to extract verified competencies and receive transparent, explainable job matches.
+                  </p>
+                  <div className="pt-1">
+                    <Link href="/resume-analyzer" className="text-xs text-green-700 font-bold hover:underline">
+                      Upload resume now →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                matchedOpportunities.slice(0, 3).map((match, idx) => {
+                  const opp = match.opportunity;
+                  const isApplied = appliedIds[opp.id];
+                  return (
+                    <div
+                      key={opp.id || idx}
+                      className="p-4 rounded-xl border border-borderGreen bg-canvas hover:border-green-300 transition-all space-y-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-bold text-textPrimary">{opp.title}</h4>
+                          <p className="text-[11px] text-muted">{opp.company} • {opp.location}</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-green-100 text-green-800 border border-green-200">
+                          {match.matchScore}% Match
+                        </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-green-100 text-green-800 border border-green-200">
-                        {match.matchScore}% Match
-                      </span>
-                    </div>
 
                     <div className="flex flex-wrap gap-1">
                       {match.matchedSkills.slice(0, 3).map((sk) => (
@@ -508,7 +562,8 @@ export default function UserDashboardPage() {
                     </div>
                   </div>
                 );
-              })}
+              })
+            )}
             </div>
           </div>
         </div>

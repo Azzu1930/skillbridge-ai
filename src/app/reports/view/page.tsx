@@ -42,20 +42,61 @@ function ReportViewContent() {
 
   const [downloadingDocx, setDownloadingDocx] = useState(false);
 
-  // Resolve target report:
+  // Authorization and Report Resolution:
   let resolvedReport: CareerReport | null = null;
+  let isUnauthorized = false;
+  let isNotFound = false;
+
   if (reportId) {
-    resolvedReport = userReports.find((r) => r.id === reportId) || null;
-    if (!resolvedReport && currentUser) {
-      resolvedReport = getUserReportById(currentUser.id, reportId);
+    if (currentUser) {
+      resolvedReport = userReports.find((r) => r.id === reportId) || getUserReportById(currentUser.id, reportId);
+      if (!resolvedReport) {
+        // Check if this report belongs to another user
+        let existsElsewhere = false;
+        if (typeof window !== 'undefined') {
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('sb_user_') && key.endsWith('_reports')) {
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                  const reps: CareerReport[] = JSON.parse(raw);
+                  if (reps.some((r) => r.id === reportId)) {
+                    existsElsewhere = true;
+                    break;
+                  }
+                }
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (existsElsewhere) {
+          isUnauthorized = true;
+        } else {
+          isNotFound = true;
+        }
+      }
+    } else {
+      // Guest / Demo session
+      if (lastGeneratedReport && lastGeneratedReport.id === reportId) {
+        resolvedReport = lastGeneratedReport;
+      } else {
+        isNotFound = true;
+      }
+    }
+  } else {
+    // No reportId specified in query
+    if (currentUser) {
+      resolvedReport = userReports[0] || null;
+    } else {
+      resolvedReport = lastGeneratedReport || null;
     }
   }
-  if (!resolvedReport) {
-    resolvedReport = userReports[0] || lastGeneratedReport || null;
-  }
 
-  // Fallback demo report synthesis if user visits with no active reports
-  if (!resolvedReport) {
+  // Fallback demo report synthesis ONLY in explicit guest / demo mode (NEVER for authenticated users)
+  if (!resolvedReport && !currentUser && !isUnauthorized && !isNotFound) {
     const demoAnalysis: ResumeAnalysisResult = {
       id: 'demo_analysis_primary',
       fileName: 'Abdul_Aziz_Resume.pdf',
@@ -102,11 +143,86 @@ function ReportViewContent() {
       },
     };
 
-    resolvedReport = createCareerReportFromAnalysis(demoAnalysis, currentUser?.id || 'demo_user', {
+    resolvedReport = createCareerReportFromAnalysis(demoAnalysis, 'demo_user', {
       fileName: 'Abdul_Aziz_Resume.pdf',
       fileSize: '142 KB',
       fileType: 'pdf',
     });
+  }
+
+  // 403 Forbidden State
+  if (isUnauthorized) {
+    return (
+      <div className="p-10 text-center rounded-2xl bg-white border border-red-200 shadow-xs space-y-4 max-w-xl mx-auto my-12">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
+          <AlertTriangle className="w-8 h-8 text-red-600" />
+        </div>
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-red-100 text-red-800 border border-red-200 inline-block">
+          403 FORBIDDEN • ACCESS DENIED
+        </span>
+        <h2 className="text-xl font-bold text-textPrimary">Unauthorized Report Access</h2>
+        <p className="text-xs sm:text-sm text-muted">
+          You do not have authorization to view this Career Intelligence Report. This report belongs to another candidate account.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/reports"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-xs inline-block"
+          >
+            Back to My Reports
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // 404 Not Found State
+  if (isNotFound) {
+    return (
+      <div className="p-10 text-center rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4 max-w-xl mx-auto my-12">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
+          <FileText className="w-8 h-8 text-slate-500" />
+        </div>
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+          404 NOT FOUND
+        </span>
+        <h2 className="text-xl font-bold text-textPrimary">Report Not Found</h2>
+        <p className="text-xs sm:text-sm text-muted">
+          No Career Intelligence Report exists with ID "{reportId}".
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/reports"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-xs inline-block"
+          >
+            Back to My Reports
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated User Empty State (0 reports)
+  if (!resolvedReport) {
+    return (
+      <div className="p-10 text-center rounded-2xl bg-white border border-dashed border-borderGreen shadow-xs space-y-4 max-w-xl mx-auto my-12">
+        <div className="w-16 h-16 mx-auto rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
+          <FileText className="w-8 h-8 text-green-600" />
+        </div>
+        <h2 className="text-xl font-bold text-textPrimary">No Reports Generated Yet</h2>
+        <p className="text-xs sm:text-sm text-muted">
+          Upload your resume to generate your first personalized Career Intelligence Report.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/resume-analyzer"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-xs inline-block"
+          >
+            Upload Resume Now
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const report = resolvedReport;

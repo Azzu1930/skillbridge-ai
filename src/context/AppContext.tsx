@@ -36,6 +36,7 @@ import {
   loginUser,
   registerUser,
   logoutUser,
+  getScopedStorageKey,
 } from '@/lib/auth-service';
 import {
   getUserReports,
@@ -43,6 +44,38 @@ import {
   deleteUserReport,
   createCareerReportFromAnalysis,
 } from '@/lib/report-storage';
+
+function createCleanStudentProfile(user: UserAccount): StudentProfile {
+  return {
+    id: `std_${user.id}`,
+    name: user.fullName,
+    tagline: `${user.targetRole || 'Target Role Pending'} • SkillBridge AI Candidate`,
+    email: user.email,
+    phone: '',
+    rollNumber: '2026-USER-01',
+    college: user.institution || 'Engineering Institute',
+    degree: 'B.Tech / Equivalent',
+    department: 'Computer Science & Engineering',
+    year: 4,
+    cgpa: 8.0,
+    targetRole: user.targetRole || 'Backend Developer',
+    readinessScore: 0,
+    technicalScore: 0,
+    softSkillScore: 0,
+    projectScore: 0,
+    interviewScore: 0,
+    skills: [],
+    bio: `Candidate profile for ${user.fullName}. Upload your resume to extract skills, compute readiness scores, and discover personalized career opportunities.`,
+    github: 'https://github.com/',
+    linkedin: 'https://linkedin.com/in/',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    readinessTrend: [{ month: 'Baseline', score: 0 }],
+    projects: [],
+    certifications: [],
+    internships: [],
+    achievements: [],
+  };
+}
 
 interface AppContextType {
   role: UserRole;
@@ -140,6 +173,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage on mount (client-side only)
   useEffect(() => {
     try {
+      // Purge legacy global keys that cause cross-tenant contamination
+      localStorage.removeItem('sb_user_resume');
+      localStorage.removeItem('sb_resume_versions');
+      localStorage.removeItem('sb_guest_last_report');
+      localStorage.removeItem('sb_applications');
+
       // Check auth session
       const session = getCurrentSession();
       if (session) {
@@ -147,36 +186,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const user = getCurrentUser();
         if (user) {
           setCurrentUser(user);
+          setActiveSessionMode('user');
           const reports = getUserReports(user.id);
           setUserReports(reports);
           if (reports.length > 0) {
             setLastGeneratedReport(reports[0]);
           }
+
+          // Load user-scoped resume profile
+          const userResumeKey = getScopedStorageKey(user.id, 'resume_profile');
+          const savedResume = localStorage.getItem(userResumeKey);
+          if (savedResume) {
+            const parsed: ResumeAnalysisResult = JSON.parse(savedResume);
+            setUserResumeProfile(parsed);
+            syncUserResumeToProfile(parsed);
+          } else {
+            setStudent(createCleanStudentProfile(user));
+          }
+
+          // Load user-scoped resume versions
+          const userVersionsKey = getScopedStorageKey(user.id, 'resume_versions');
+          const savedVersions = localStorage.getItem(userVersionsKey);
+          if (savedVersions) {
+            setResumeVersions(JSON.parse(savedVersions));
+          }
+
+          // Load user-scoped applications
+          const userAppsKey = getScopedStorageKey(user.id, 'applications');
+          const savedApps = localStorage.getItem(userAppsKey);
+          if (savedApps) {
+            setApplications(JSON.parse(savedApps));
+          } else {
+            setApplications([]);
+          }
+          return;
         }
       }
 
+      // Guest / Demo session defaults
       const savedRole = localStorage.getItem('sb_demo_role') as UserRole;
       if (savedRole && ['student', 'industry', 'faculty', 'admin'].includes(savedRole)) {
         setRoleState(savedRole);
       }
-      const savedResume = localStorage.getItem('sb_user_resume');
-      if (savedResume) {
-        const parsed: ResumeAnalysisResult = JSON.parse(savedResume);
-        setUserResumeProfile(parsed);
-      }
-      const savedVersions = localStorage.getItem('sb_resume_versions');
-      if (savedVersions) {
-        setResumeVersions(JSON.parse(savedVersions));
-      }
-      const savedMode = localStorage.getItem('sb_session_mode') as 'demo' | 'user';
-      if (savedMode) {
-        setActiveSessionMode(savedMode);
-      }
-
-      const savedGuestReport = localStorage.getItem('sb_guest_last_report');
-      if (savedGuestReport && !lastGeneratedReport) {
-        setLastGeneratedReport(JSON.parse(savedGuestReport));
-      }
+      setStudent(PRIMARY_STUDENT);
+      setActiveSessionMode('demo');
     } catch {
       // ignore storage errors
     }
@@ -325,6 +378,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveUserReport(currentUser.id, report);
       const updatedReports = getUserReports(currentUser.id);
       setUserReports(updatedReports);
+      try {
+        localStorage.setItem(getScopedStorageKey(currentUser.id, 'resume_profile'), JSON.stringify(analysis));
+        localStorage.setItem(getScopedStorageKey(currentUser.id, 'resume_versions'), JSON.stringify(updatedVersions));
+      } catch {
+        // ignore
+      }
+    } else {
+      try {
+        localStorage.setItem('sb_guest_resume_profile', JSON.stringify(analysis));
+        localStorage.setItem('sb_guest_resume_versions', JSON.stringify(updatedVersions));
+        localStorage.setItem('sb_guest_last_report', JSON.stringify(report));
+      } catch {
+        // ignore
+      }
     }
 
     // Add confirmation notification
@@ -339,22 +406,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     setNotifications((prev) => [newNotif, ...prev]);
 
-    try {
-      localStorage.setItem('sb_user_resume', JSON.stringify(analysis));
-      localStorage.setItem('sb_resume_versions', JSON.stringify(updatedVersions));
-      localStorage.setItem('sb_session_mode', 'user');
-      if (!currentUser) {
-        localStorage.setItem('sb_guest_last_report', JSON.stringify(report));
-      }
-    } catch {
-      // ignore
-    }
-
     return report;
   };
 
   /**
-   * Phase 4: Authentication Actions
+   * Phase 4 & 5: Authentication Actions with Strict Multi-Tenant Isolation
    */
   const login = async (email: string, password: string): Promise<UserAccount> => {
     const result = await loginUser(email, password);
@@ -365,8 +421,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Load user's private reports
     const userReps = getUserReports(result.user.id);
     setUserReports(userReps);
-    if (userReps.length > 0) {
-      setLastGeneratedReport(userReps[0]);
+    setLastGeneratedReport(userReps.length > 0 ? userReps[0] : null);
+
+    // Load user-scoped profile
+    try {
+      const profKey = getScopedStorageKey(result.user.id, 'resume_profile');
+      const savedProf = localStorage.getItem(profKey);
+      if (savedProf) {
+        const parsed: ResumeAnalysisResult = JSON.parse(savedProf);
+        setUserResumeProfile(parsed);
+        syncUserResumeToProfile(parsed);
+      } else {
+        setUserResumeProfile(null);
+        setStudent(createCleanStudentProfile(result.user));
+      }
+
+      const versKey = getScopedStorageKey(result.user.id, 'resume_versions');
+      const savedVers = localStorage.getItem(versKey);
+      setResumeVersions(savedVers ? JSON.parse(savedVers) : []);
+
+      const appsKey = getScopedStorageKey(result.user.id, 'applications');
+      const savedApps = localStorage.getItem(appsKey);
+      setApplications(savedApps ? JSON.parse(savedApps) : []);
+    } catch {
+      // ignore
     }
 
     return result.user;
@@ -385,6 +463,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthSession(result.session);
     setActiveSessionMode('user');
     setUserReports([]);
+    setLastGeneratedReport(null);
+    setUserResumeProfile(null);
+    setResumeVersions([]);
+    setApplications([]);
+    setStudent(createCleanStudentProfile(result.user));
     return result.user;
   };
 
@@ -394,6 +477,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthSession(null);
     setUserReports([]);
     setLastGeneratedReport(null);
+    setUserResumeProfile(null);
+    setResumeVersions([]);
+    setApplications(INITIAL_APPLICATIONS);
     setActiveSessionMode('demo');
     setStudent(PRIMARY_STUDENT);
   };
@@ -443,10 +529,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const updated = { ...userResumeProfile, targetRole: newRole };
       setUserResumeProfile(updated);
       setStudent((prev) => ({ ...prev, targetRole: newRole }));
-      try {
-        localStorage.setItem('sb_user_resume', JSON.stringify(updated));
-      } catch {
-        // ignore
+      if (currentUser) {
+        try {
+          localStorage.setItem(getScopedStorageKey(currentUser.id, 'resume_profile'), JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
       }
     } else {
       setStudent((prev) => ({ ...prev, targetRole: newRole }));
@@ -486,19 +574,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     setNotifications((prev) => [newNotif, ...prev]);
 
-    try {
-      localStorage.setItem('sb_applications', JSON.stringify(updated));
-    } catch {
-      // ignore
+    if (currentUser) {
+      try {
+        localStorage.setItem(getScopedStorageKey(currentUser.id, 'applications'), JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
     }
 
     return true;
   };
 
   const updateApplicationStatus = (applicationId: string, status: ApplicationItem['status']) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === applicationId ? { ...app, status } : app))
-    );
+    setApplications((prev) => {
+      const updated = prev.map((app) => (app.id === applicationId ? { ...app, status } : app));
+      if (currentUser) {
+        try {
+          localStorage.setItem(getScopedStorageKey(currentUser.id, 'applications'), JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+      }
+      return updated;
+    });
 
     const targetApp = applications.find((a) => a.id === applicationId);
     if (targetApp) {

@@ -1,22 +1,44 @@
 import { ExtractedSkillItem, ResumeAnalysisResult, ResumeVersion } from '@/types';
 
+// Polyfill Promise.withResolvers for browsers and Node.js versions lacking it (required by pdfjs-dist 4+)
+if (typeof (Promise as any).withResolvers === 'undefined') {
+  (Promise as any).withResolvers = function <T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+
 /**
  * Robust Client-Side and Server-Side Document Text Extractors
  */
 
 export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
   try {
-    // Dynamic import to prevent SSR bundling errors
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    
-    // Disable worker for maximum portability across edge & static environments
-    if (pdfjs.GlobalWorkerOptions) {
-      pdfjs.GlobalWorkerOptions.workerSrc = '';
+
+    if (typeof window !== 'undefined') {
+      if (pdfjs.GlobalWorkerOptions) {
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version || '4.4.168'}/legacy/build/pdf.worker.min.mjs`;
+      }
+    } else {
+      // In Node environment / SSR / test runner
+      try {
+        // @ts-ignore
+        await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+      } catch {
+        // ignore worker import if already set
+      }
     }
 
     const loadingTask = pdfjs.getDocument({
       data: new Uint8Array(arrayBuffer),
       useSystemFonts: true,
+      isEvalSupported: false,
     } as any);
 
     const pdf = await loadingTask.promise;
@@ -27,31 +49,35 @@ export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       const textContent = await page.getTextContent();
       const pageText = textContent.items
         .map((item: any) => ('str' in item ? item.str : ''))
+        .filter((str: string) => str.trim().length > 0)
         .join(' ');
       fullText += pageText + '\n';
     }
 
     if (!fullText.trim()) {
-      throw new Error('No readable text layer found in PDF. (May be a scanned image).');
+      throw new Error("We couldn't extract selectable text from this PDF. Please upload a text-based PDF or DOCX.");
     }
 
     return fullText;
   } catch (err: any) {
-    console.warn('Primary PDF parser encountered issue:', err.message);
-    // Fallback: try reading raw ASCII chunks if possible
+    console.warn('PDF parser notice:', err?.message || err);
+    // Fallback: try reading raw stream or ASCII text segments if possible
     try {
-      const decoder = new TextDecoder('utf-8');
+      const decoder = new TextDecoder('utf-8', { fatal: false });
       const raw = decoder.decode(arrayBuffer);
       const textMatches = raw.match(/\(([^()]{2,})\)Tj/g) || raw.match(/\[([^\[\]]{2,})\]TJ/g);
       if (textMatches && textMatches.length > 5) {
-        return textMatches
+        const fallbackText = textMatches
           .map((m) => m.replace(/^[(\[]|[)\]]T[jJ]$/g, ''))
           .join(' ');
+        if (fallbackText.trim().length > 50) {
+          return fallbackText;
+        }
       }
     } catch {
-      // Ignore fallback error
+      // Ignore fallback failure
     }
-    throw new Error('Unable to extract readable text from this PDF. Please ensure it is a text-based document.');
+    throw new Error("We couldn't extract selectable text from this PDF. Please upload a text-based PDF or DOCX.");
   }
 }
 
@@ -66,6 +92,47 @@ export async function extractTextFromDocx(arrayBuffer: ArrayBuffer): Promise<str
   } catch (err: any) {
     throw new Error(err.message || 'Failed to parse DOCX document.');
   }
+}
+
+export async function extractTextFromDoc(arrayBuffer: ArrayBuffer): Promise<string> {
+  // First attempt: test if it is a docx renamed to .doc
+  try {
+    const mammoth = await import('mammoth');
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    if (result.value && result.value.trim().length > 30) {
+      return result.value;
+    }
+  } catch {
+    // fallback to binary text chunk extraction
+  }
+
+  try {
+    const bytes = new Uint8Array(arrayBuffer);
+    let extracted = '';
+    let currentWord = '';
+    for (let i = 0; i < bytes.length; i++) {
+      const b = bytes[i];
+      if ((b >= 32 && b <= 126) || b === 10 || b === 13 || b === 9) {
+        currentWord += String.fromCharCode(b);
+      } else {
+        if (currentWord.length >= 3) {
+          extracted += ' ' + currentWord;
+        }
+        currentWord = '';
+      }
+    }
+    if (currentWord.length >= 3) {
+      extracted += ' ' + currentWord;
+    }
+    const cleaned = extracted.replace(/\s+/g, ' ').trim();
+    if (cleaned.length > 50) {
+      return cleaned;
+    }
+  } catch {
+    // ignore
+  }
+
+  throw new Error("We couldn't extract readable text from this DOC file. Please save it as DOCX or PDF and upload again.");
 }
 
 /**
