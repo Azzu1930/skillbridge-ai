@@ -36,11 +36,25 @@ interface SidebarLink {
 }
 
 export function Sidebar() {
-  const { role, student, activeSessionMode } = useApp();
+  const { role, student, activeSessionMode, isAuthenticated, currentUser } = useApp();
   const pathname = usePathname();
 
-  const studentLinks: SidebarLink[] = [
-    { href: '/resume-analyzer', label: 'Resume Intelligence', icon: FileText, badge: 'New Upload', highlight: true },
+  const userAccountLinks: SidebarLink[] = [
+    { href: '/dashboard', label: 'My Dashboard', icon: LayoutDashboard, highlight: true },
+    { href: '/resume-analyzer', label: 'Analyze Resume', icon: FileText, badge: 'AI Parse' },
+    { href: '/reports', label: 'My Reports', icon: Layers, badge: 'DOCX/JSON' },
+    { href: '/student/skill-twin', label: 'AI Skill Twin', icon: Cpu },
+    { href: '/student/skill-gap', label: 'Skill Gap Analysis', icon: Target },
+    { href: '/student/roadmap', label: 'Learning Roadmap', icon: MapPin },
+    { href: '/student/opportunities', label: 'Job Opportunities', icon: Briefcase },
+    { href: '/student/applications', label: 'My Applications', icon: Workflow },
+    { href: '/profile', label: 'Account Profile', icon: GraduationCap },
+    { href: '/assistant', label: 'AI Career Advisor', icon: Bot },
+  ];
+
+  const studentDemoLinks: SidebarLink[] = [
+    { href: '/resume-analyzer', label: 'Resume Intelligence', icon: FileText, badge: 'Upload', highlight: true },
+    { href: '/reports', label: 'Resume Reports', icon: Layers, badge: 'DOCX/JSON' },
     { href: '/student/dashboard', label: 'Student Overview', icon: LayoutDashboard },
     { href: '/student/skill-twin', label: 'AI Skill Twin', icon: Cpu, badge: 'Dynamic' },
     { href: '/student/skill-gap', label: 'AI Skill Gap', icon: Target },
@@ -81,8 +95,10 @@ export function Sidebar() {
   ];
 
   const links =
-    role === 'student'
-      ? studentLinks
+    isAuthenticated
+      ? userAccountLinks
+      : role === 'student'
+      ? studentDemoLinks
       : role === 'industry'
       ? industryLinks
       : role === 'faculty'
@@ -90,23 +106,32 @@ export function Sidebar() {
       : adminLinks;
 
   return (
-    <aside className="w-64 border-r border-slate-200 bg-white flex flex-col shrink-0 min-h-[calc(100vh-4rem)] shadow-xs">
+    <aside className="w-64 border-r border-[#dce9df] bg-white flex flex-col shrink-0 min-h-[calc(100vh-4rem)] shadow-xs">
       {/* Role Banner */}
-      <div className="p-4 border-b border-slate-100">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
-          {role === 'student' && <GraduationCap className="w-5 h-5 text-blue-600 shrink-0" />}
-          {role === 'industry' && <Building2 className="w-5 h-5 text-amber-600 shrink-0" />}
-          {role === 'faculty' && <Layers className="w-5 h-5 text-emerald-600 shrink-0" />}
-          {role === 'admin' && <Sparkles className="w-5 h-5 text-purple-600 shrink-0" />}
+      <div className="p-4 border-b border-[#dce9df]/60">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#f7fcf8] border border-[#dce9df]">
+          {isAuthenticated ? (
+            <GraduationCap className="w-5 h-5 text-green-600 shrink-0" />
+          ) : role === 'student' ? (
+            <GraduationCap className="w-5 h-5 text-green-700 shrink-0" />
+          ) : role === 'industry' ? (
+            <Building2 className="w-5 h-5 text-amber-600 shrink-0" />
+          ) : role === 'faculty' ? (
+            <Layers className="w-5 h-5 text-emerald-600 shrink-0" />
+          ) : (
+            <Sparkles className="w-5 h-5 text-purple-600 shrink-0" />
+          )}
           <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+            <p className="text-[10px] font-bold tracking-wider text-[#526157] uppercase">
               Current Perspective
             </p>
-            <p className="text-xs font-bold text-slate-900 capitalize truncate">
-              {role === 'student'
+            <p className="text-xs font-bold text-[#17251b] capitalize truncate">
+              {isAuthenticated
+                ? `${currentUser?.fullName || 'User'} (Account)`
+                : role === 'student'
                 ? activeSessionMode === 'user'
                   ? 'Personal Resume Mode'
-                  : 'Student Portal'
+                  : 'Student Demo (Abdul Aziz)'
                 : role === 'industry'
                 ? 'Industry Talent Portal'
                 : role === 'faculty'
@@ -129,20 +154,20 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
                 isActive
-                  ? 'bg-blue-50 text-blue-700 font-semibold border border-blue-200 shadow-xs'
+                  ? 'bg-green-50 text-green-800 font-semibold border border-green-200 shadow-xs'
                   : item.highlight
-                  ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-[#f0fdf4] text-green-800 hover:bg-green-100/60 border border-green-200'
+                  : 'text-[#526157] hover:text-[#17251b] hover:bg-[#f7fcf8]'
               }`}
             >
               <div className="flex items-center gap-2.5">
                 <Icon
                   className={`w-4 h-4 transition-colors ${
                     isActive
-                      ? 'text-blue-600'
+                      ? 'text-green-600'
                       : item.highlight
-                      ? 'text-emerald-600'
-                      : 'text-slate-400 group-hover:text-slate-700'
+                      ? 'text-green-600'
+                      : 'text-slate-400 group-hover:text-green-700'
                   }`}
                 />
                 <span>{item.label}</span>
@@ -151,10 +176,10 @@ export function Sidebar() {
                 <span
                   className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
                     isActive
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-green-600 text-white'
                       : item.highlight
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      ? 'bg-green-700 text-white'
+                      : 'bg-[#f0fdf4] text-green-800 border border-green-200'
                   }`}
                 >
                   {item.badge}
@@ -166,19 +191,35 @@ export function Sidebar() {
       </nav>
 
       {/* Active Persona Summary footer */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50">
+      <div className="p-4 border-t border-[#dce9df]/60 bg-[#f7fcf8]">
         <div className="flex items-center gap-3">
           <img
             src={student.avatar}
             alt={student.name}
-            className="w-8 h-8 rounded-full border border-slate-200 object-cover shadow-xs"
+            className="w-8 h-8 rounded-full border border-[#dce9df] object-cover shadow-xs"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-900 truncate">
-              {role === 'student' ? student.name : role === 'industry' ? 'Hiring Lead @ Razorpay' : role === 'faculty' ? 'Dr. Ramesh Sharma' : 'Dean of Academics'}
+            <p className="text-xs font-bold text-[#17251b] truncate">
+              {isAuthenticated
+                ? currentUser?.fullName
+                : role === 'student'
+                ? student.name
+                : role === 'industry'
+                ? 'Hiring Lead @ Razorpay'
+                : role === 'faculty'
+                ? 'Dr. Ramesh Sharma'
+                : 'Dean of Academics'}
             </p>
-            <p className="text-[10px] text-slate-500 truncate font-medium">
-              {role === 'student' ? `${student.targetRole} (${student.readinessScore}%)` : role === 'industry' ? 'Tech Talent Operations' : role === 'faculty' ? 'Computer Science & Eng' : 'NIT Central Placement'}
+            <p className="text-[10px] text-[#526157] truncate font-medium">
+              {isAuthenticated
+                ? `${currentUser?.targetRole || 'Candidate'} (Authenticated)`
+                : role === 'student'
+                ? `${student.targetRole} (${student.readinessScore}%)`
+                : role === 'industry'
+                ? 'Tech Talent Operations'
+                : role === 'faculty'
+                ? 'Computer Science & Eng'
+                : 'NIT Central Placement'}
             </p>
           </div>
         </div>

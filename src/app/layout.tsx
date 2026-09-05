@@ -6,12 +6,13 @@ import { AppProvider } from '@/context/AppContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SkillBridge AI — Academia × Industry Intelligence Platform',
+  title: 'SkillBridge AI — Resume Intelligence & Academia × Industry Platform',
   description:
-    'AI-powered platform for skill mapping, internships, placements and academia-industry collaboration. SIH 2026 Prototype • SIH26044.',
+    'Upload your resume, discover skill gaps, measure career readiness and find relevant opportunities with SkillBridge AI.',
   keywords: [
     'SkillBridge AI',
     'SIH26044',
+    'Resume Intelligence',
     'Academia Industry Collaboration',
     'Skill Mapping',
     'Skill Twin',
@@ -22,9 +23,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'SkillBridge AI Team' }],
   openGraph: {
-    title: 'SkillBridge AI — Academia × Industry Intelligence Platform',
+    title: 'SkillBridge AI — Resume Intelligence & Academia × Industry Platform',
     description:
-      'AI-powered platform for skill mapping, internships, placements and academia-industry collaboration.',
+      'Upload your resume, discover skill gaps, measure career readiness and find relevant opportunities with SkillBridge AI.',
     type: 'website',
   },
 };
@@ -36,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="light">
-      <body className={`${inter.className} bg-[#f8fafc] text-slate-900 min-h-screen antialiased selection:bg-blue-600 selection:text-white`}>
+      <body className={`${inter.className} bg-[#f7fcf8] text-[#17251b] min-h-screen antialiased selection:bg-green-600 selection:text-white`}>
         <AppProvider>
           {children}
         </AppProvider>

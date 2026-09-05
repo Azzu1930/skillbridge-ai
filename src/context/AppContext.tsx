@@ -14,6 +14,9 @@ import {
   ResumeAnalysisResult,
   ResumeVersion,
   StudentSkill,
+  UserAccount,
+  AuthSession,
+  CareerReport,
 } from '@/types';
 import {
   PRIMARY_STUDENT,
@@ -27,6 +30,19 @@ import {
   TARGET_ROLE_BENCHMARKS,
 } from '@/data/seedData';
 import { compareResumeVersions } from '@/lib/resume-parser';
+import {
+  getCurrentUser,
+  getCurrentSession,
+  loginUser,
+  registerUser,
+  logoutUser,
+} from '@/lib/auth-service';
+import {
+  getUserReports,
+  saveUserReport,
+  deleteUserReport,
+  createCareerReportFromAnalysis,
+} from '@/lib/report-storage';
 
 interface AppContextType {
   role: UserRole;
@@ -36,7 +52,15 @@ interface AppContextType {
   setSessionMode: (mode: 'demo' | 'user') => void;
   userResumeProfile: ResumeAnalysisResult | null;
   resumeVersions: ResumeVersion[];
-  handleResumeUpload: (analysis: ResumeAnalysisResult) => void;
+  handleResumeUpload: (
+    analysis: ResumeAnalysisResult,
+    originalFile?: {
+      fileName: string;
+      fileSize: string;
+      fileType: 'pdf' | 'docx' | 'txt';
+      fileDataUrl?: string;
+    }
+  ) => CareerReport;
   setUserTargetRole: (role: string) => void;
   opportunities: JobOpportunity[];
   applications: ApplicationItem[];
@@ -61,6 +85,32 @@ interface AppContextType {
   generateNewTrainingPlan: (skill: string, cohort: string) => void;
   markNotificationRead: (id: string) => void;
   resetDemoData: () => void;
+
+  // Phase 4 Authentication & User Reports
+  currentUser: UserAccount | null;
+  isAuthenticated: boolean;
+  authSession: AuthSession | null;
+  userReports: CareerReport[];
+  lastGeneratedReport: CareerReport | null;
+  setLastGeneratedReport: (report: CareerReport | null) => void;
+  login: (email: string, password: string) => Promise<UserAccount>;
+  register: (params: {
+    fullName: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+    targetRole?: string;
+    institution?: string;
+  }) => Promise<UserAccount>;
+  logout: () => void;
+  refreshUserReports: () => void;
+  saveCurrentAnalysisAsReport: (originalFile?: {
+    fileName: string;
+    fileSize: string;
+    fileType: 'pdf' | 'docx' | 'txt';
+    fileDataUrl?: string;
+  }) => CareerReport | null;
+  deleteReport: (reportId: string) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,9 +131,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isDemoTourOpen, setIsDemoTourOpen] = useState(false);
   const [demoTourStep, setDemoTourStep] = useState(0);
 
+  // Phase 4: User Authentication & Persistent Reports State
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [authSession, setAuthSession] = useState<AuthSession | null>(null);
+  const [userReports, setUserReports] = useState<CareerReport[]>([]);
+  const [lastGeneratedReport, setLastGeneratedReport] = useState<CareerReport | null>(null);
+
   // Load from localStorage on mount (client-side only)
   useEffect(() => {
     try {
+      // Check auth session
+      const session = getCurrentSession();
+      if (session) {
+        setAuthSession(session);
+        const user = getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+          const reports = getUserReports(user.id);
+          setUserReports(reports);
+          if (reports.length > 0) {
+            setLastGeneratedReport(reports[0]);
+          }
+        }
+      }
+
       const savedRole = localStorage.getItem('sb_demo_role') as UserRole;
       if (savedRole && ['student', 'industry', 'faculty', 'admin'].includes(savedRole)) {
         setRoleState(savedRole);
@@ -100,6 +171,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedMode = localStorage.getItem('sb_session_mode') as 'demo' | 'user';
       if (savedMode) {
         setActiveSessionMode(savedMode);
+      }
+
+      const savedGuestReport = localStorage.getItem('sb_guest_last_report');
+      if (savedGuestReport && !lastGeneratedReport) {
+        setLastGeneratedReport(JSON.parse(savedGuestReport));
       }
     } catch {
       // ignore storage errors
@@ -207,9 +283,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   /**
-   * Handle Genuine Resume Upload
+   * Handle Genuine Resume Upload with Automatic Complete Report Generation
    */
-  const handleResumeUpload = (analysis: ResumeAnalysisResult) => {
+  const handleResumeUpload = (
+    analysis: ResumeAnalysisResult,
+    originalFile?: {
+      fileName: string;
+      fileSize: string;
+      fileType: 'pdf' | 'docx' | 'txt';
+      fileDataUrl?: string;
+    }
+  ): CareerReport => {
     setUserResumeProfile(analysis);
     setActiveSessionMode('user');
 
@@ -232,15 +316,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Sync to active profile
     syncUserResumeToProfile(analysis);
 
+    // AUTOMATIC COMPLETE REPORT GENERATION (Features 1, 2, 3, 4, 13)
+    const activeUserId = currentUser ? currentUser.id : 'guest_session';
+    const report = createCareerReportFromAnalysis(analysis, activeUserId, originalFile);
+    setLastGeneratedReport(report);
+
+    if (currentUser) {
+      saveUserReport(currentUser.id, report);
+      const updatedReports = getUserReports(currentUser.id);
+      setUserReports(updatedReports);
+    }
+
     // Add confirmation notification
     const newNotif: NotificationItem = {
       id: `notif_upload_${Date.now()}`,
-      title: 'Resume Analyzed Successfully',
-      message: `Welcome, ${analysis.name}! Extracted ${analysis.technicalSkills.length} competencies. Career Readiness calculated at ${analysis.readinessScore}%.`,
+      title: 'Career Intelligence Report Ready',
+      message: `Welcome, ${analysis.name}! Extracted ${analysis.technicalSkills.length} competencies. Career Readiness calculated at ${analysis.readinessScore}%. Your DOCX and JSON reports have been generated automatically.`,
       time: 'Just now',
       type: 'success',
       read: false,
-      link: '/resume-analyzer',
+      link: '/reports',
     };
     setNotifications((prev) => [newNotif, ...prev]);
 
@@ -248,9 +343,96 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('sb_user_resume', JSON.stringify(analysis));
       localStorage.setItem('sb_resume_versions', JSON.stringify(updatedVersions));
       localStorage.setItem('sb_session_mode', 'user');
+      if (!currentUser) {
+        localStorage.setItem('sb_guest_last_report', JSON.stringify(report));
+      }
     } catch {
       // ignore
     }
+
+    return report;
+  };
+
+  /**
+   * Phase 4: Authentication Actions
+   */
+  const login = async (email: string, password: string): Promise<UserAccount> => {
+    const result = await loginUser(email, password);
+    setCurrentUser(result.user);
+    setAuthSession(result.session);
+    setActiveSessionMode('user');
+
+    // Load user's private reports
+    const userReps = getUserReports(result.user.id);
+    setUserReports(userReps);
+    if (userReps.length > 0) {
+      setLastGeneratedReport(userReps[0]);
+    }
+
+    return result.user;
+  };
+
+  const register = async (params: {
+    fullName: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+    targetRole?: string;
+    institution?: string;
+  }): Promise<UserAccount> => {
+    const result = await registerUser(params);
+    setCurrentUser(result.user);
+    setAuthSession(result.session);
+    setActiveSessionMode('user');
+    setUserReports([]);
+    return result.user;
+  };
+
+  const logout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    setAuthSession(null);
+    setUserReports([]);
+    setLastGeneratedReport(null);
+    setActiveSessionMode('demo');
+    setStudent(PRIMARY_STUDENT);
+  };
+
+  const refreshUserReports = () => {
+    if (currentUser) {
+      const reports = getUserReports(currentUser.id);
+      setUserReports(reports);
+    }
+  };
+
+  const saveCurrentAnalysisAsReport = (originalFile?: {
+    fileName: string;
+    fileSize: string;
+    fileType: 'pdf' | 'docx' | 'txt';
+    fileDataUrl?: string;
+  }): CareerReport | null => {
+    if (!userResumeProfile) return null;
+    const activeUserId = currentUser ? currentUser.id : 'guest_session';
+    const report = createCareerReportFromAnalysis(userResumeProfile, activeUserId, originalFile);
+    setLastGeneratedReport(report);
+
+    if (currentUser) {
+      saveUserReport(currentUser.id, report);
+      setUserReports(getUserReports(currentUser.id));
+    }
+    return report;
+  };
+
+  const deleteReport = (reportId: string): boolean => {
+    if (!currentUser) return false;
+    const success = deleteUserReport(currentUser.id, reportId);
+    if (success) {
+      refreshUserReports();
+      if (lastGeneratedReport?.id === reportId) {
+        setLastGeneratedReport(null);
+      }
+    }
+    return success;
   };
 
   /**
@@ -612,6 +794,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         generateNewTrainingPlan,
         markNotificationRead,
         resetDemoData,
+
+        // Phase 4 Authentication & Reports
+        currentUser,
+        isAuthenticated: !!currentUser,
+        authSession,
+        userReports,
+        lastGeneratedReport,
+        setLastGeneratedReport,
+        login,
+        register,
+        logout,
+        refreshUserReports,
+        saveCurrentAnalysisAsReport,
+        deleteReport,
       }}
     >
       {children}

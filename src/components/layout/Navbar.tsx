@@ -18,8 +18,10 @@ import {
   ShieldCheck,
   UserCheck,
   FileText,
-  ArrowRight,
-  RefreshCw,
+  User,
+  LogOut,
+  FolderKanban,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
@@ -32,21 +34,22 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
     notifications,
     setIsDemoTourOpen,
     resetDemoData,
+    currentUser,
+    isAuthenticated,
+    logout,
   } = useApp();
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
-  const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const rolesList: { role: UserRole; title: string; subtitle: string; icon: React.ReactNode; route: string }[] = [
     {
       role: 'student',
       title: 'Student Demo',
       subtitle: 'Abdul Aziz (Backend Dev, 68%)',
-      icon: <GraduationCap className="w-4 h-4 text-blue-600" />,
+      icon: <GraduationCap className="w-4 h-4 text-green-700" />,
       route: '/student/dashboard',
     },
     {
@@ -79,80 +82,89 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
     router.push(targetRoute);
   };
 
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    router.push('/');
+  };
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-xs">
+    <header className="sticky top-0 z-40 w-full border-b border-[#dce9df] bg-white/95 backdrop-blur-md shadow-xs">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 max-w-7xl mx-auto w-full">
-        {/* Brand Logo & Wordmark */}
+        {/* Brand Logo & Wordmark (Left) */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm group-hover:bg-blue-700 transition-colors">
+            <div className="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center shadow-xs group-hover:bg-green-700 transition-colors">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
-                  SkillBridge<span className="text-blue-600">AI</span>
+                <span className="font-extrabold text-base text-[#17251b] tracking-tight group-hover:text-green-700 transition-colors">
+                  SkillBridge<span className="text-green-600">AI</span>
                 </span>
-                <span className="text-[10px] font-mono uppercase bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded font-semibold">
+                <span className="text-[10px] font-mono uppercase bg-green-50 text-green-800 border border-green-200 px-1.5 py-0.5 rounded font-semibold">
                   SIH26044
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 hidden sm:block font-medium">
+              <p className="text-[11px] text-[#526157] hidden sm:block font-medium">
                 Academia × Industry Intelligence
               </p>
             </div>
           </Link>
         </div>
 
-        {/* Global Navigation Links (Desktop) */}
-        <nav className="hidden lg:flex items-center gap-1 text-xs font-medium text-slate-600">
+        {/* Global Navigation Links (Part 5: Platform, How It Works, Opportunities, Analyze Resume, Demo) */}
+        <nav className="hidden lg:flex items-center gap-1 text-xs font-medium text-[#526157]">
           <Link
-            href="/resume-analyzer"
+            href="/"
             className={`px-3 py-1.5 rounded-lg transition-colors ${
-              pathname === '/resume-analyzer'
-                ? 'text-blue-600 font-semibold bg-blue-50'
-                : 'hover:text-slate-900 hover:bg-slate-50'
+              pathname === '/'
+                ? 'text-green-700 font-semibold bg-green-50'
+                : 'hover:text-[#17251b] hover:bg-green-50/60'
             }`}
           >
-            Resume Analyzer
+            Platform
+          </Link>
+          <Link
+            href="/#how-it-works"
+            className="px-3 py-1.5 rounded-lg transition-colors hover:text-[#17251b] hover:bg-green-50/60"
+          >
+            How It Works
           </Link>
           <Link
             href="/student/opportunities"
             className={`px-3 py-1.5 rounded-lg transition-colors ${
               pathname === '/student/opportunities'
-                ? 'text-blue-600 font-semibold bg-blue-50'
-                : 'hover:text-slate-900 hover:bg-slate-50'
+                ? 'text-green-700 font-semibold bg-green-50'
+                : 'hover:text-[#17251b] hover:bg-green-50/60'
             }`}
           >
             Opportunities
           </Link>
           <Link
-            href="/industry/candidates"
+            href="/resume-analyzer"
             className={`px-3 py-1.5 rounded-lg transition-colors ${
-              pathname === '/industry/candidates'
-                ? 'text-blue-600 font-semibold bg-blue-50'
-                : 'hover:text-slate-900 hover:bg-slate-50'
+              pathname === '/resume-analyzer'
+                ? 'text-green-700 font-semibold bg-green-50'
+                : 'hover:text-[#17251b] hover:bg-green-50/60'
             }`}
           >
-            Recruiter Matcher
+            Analyze Resume
           </Link>
-          <Link
-            href="/admin/intelligence"
-            className={`px-3 py-1.5 rounded-lg transition-colors ${
-              pathname === '/admin/intelligence'
-                ? 'text-blue-600 font-semibold bg-blue-50'
-                : 'hover:text-slate-900 hover:bg-slate-50'
-            }`}
+          <button
+            onClick={() => setIsDemoTourOpen(true)}
+            className="px-3 py-1.5 rounded-lg transition-colors text-green-700 hover:text-green-800 hover:bg-green-50 flex items-center gap-1 font-semibold"
           >
-            Institutional Loop
-          </Link>
+            <Play className="w-3 h-3 fill-green-600 text-green-600" />
+            <span>Demo</span>
+          </button>
         </nav>
 
         {/* Global Search trigger */}
-        <div className="hidden md:flex items-center max-w-xs mx-4">
+        <div className="hidden xl:flex items-center max-w-xs mx-2">
           <button
             onClick={onOpenSearch}
-            className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg hover:border-slate-300 hover:text-slate-700 transition-all shadow-inner"
+            className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-[#526157] bg-[#f7fcf8] border border-[#dce9df] rounded-lg hover:border-green-300 hover:text-[#17251b] transition-all shadow-xs"
           >
             <div className="flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-slate-400" />
@@ -164,56 +176,128 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
           </button>
         </div>
 
-        {/* Right Actions: CTAs & Persona Switcher */}
+        {/* Right Actions: Auth State & CTAs */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* PRIMARY PUBLIC CTA: Analyze My Resume */}
-          <Link
-            href="/resume-analyzer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm hover:shadow transition-all"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Analyze Resume</span>
-          </Link>
+          {/* If Logged In: Profile, My Reports, Dashboard, Logout */}
+          {isAuthenticated && currentUser ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/dashboard"
+                className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  pathname === '/dashboard'
+                    ? 'text-green-800 bg-green-50 border border-green-200'
+                    : 'text-[#526157] hover:text-[#17251b] hover:bg-green-50/60'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-green-600" />
+                <span>Dashboard</span>
+              </Link>
+              <Link
+                href="/reports"
+                className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                  pathname === '/reports'
+                    ? 'text-green-800 bg-green-50 border border-green-200'
+                    : 'text-[#526157] hover:text-[#17251b] hover:bg-green-50/60'
+                }`}
+              >
+                <FolderKanban className="w-3.5 h-3.5 text-green-600" />
+                <span>My Reports</span>
+              </Link>
 
-          {/* 5-Min Demo Tour Button */}
-          <button
-            onClick={() => setIsDemoTourOpen(true)}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-all"
-          >
-            <Play className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-            <span>5-Min Tour</span>
-          </button>
+              {/* User Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-[#17251b] bg-white border border-[#dce9df] rounded-lg hover:border-green-300 transition-all shadow-xs"
+                >
+                  <div className="w-5 h-5 rounded-full bg-green-100 text-green-800 flex items-center justify-center font-bold text-[10px]">
+                    {currentUser.fullName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold max-w-[100px] truncate">{currentUser.fullName}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
 
-          {/* AI Career Assistant Shortcut */}
-          <Link
-            href="/assistant"
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-all"
-            title="AI Career Assistant"
-          >
-            <Bot className="w-3.5 h-3.5 text-blue-600" />
-            <span>Copilot</span>
-          </Link>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white border border-[#dce9df] rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                      <p className="text-xs font-bold text-[#17251b] truncate">{currentUser.fullName}</p>
+                      <p className="text-[11px] text-[#526157] truncate">{currentUser.email}</p>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-[#17251b] hover:bg-green-50 rounded-lg transition-colors"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5 text-green-600" />
+                      <span>Dashboard</span>
+                    </Link>
+                    <Link
+                      href="/reports"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-[#17251b] hover:bg-green-50 rounded-lg transition-colors"
+                    >
+                      <FolderKanban className="w-3.5 h-3.5 text-green-600" />
+                      <span>My Reports</span>
+                    </Link>
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-[#17251b] hover:bg-green-50 rounded-lg transition-colors"
+                    >
+                      <User className="w-3.5 h-3.5 text-green-600" />
+                      <span>Account Profile</span>
+                    </Link>
+                    <div className="border-t border-slate-100 my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left font-medium"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* If Logged Out: Login and Register buttons */
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3 py-1.5 text-xs font-semibold text-[#17251b] hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="px-3.5 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-xs hover:shadow-sm transition-all"
+              >
+                Register
+              </Link>
+            </div>
+          )}
 
-          {/* Role Switcher Dropdown */}
+          {/* Demo Persona Switcher (Allows Judges to switch roles without signing in) */}
           <div className="relative">
             <button
               onClick={() => setShowRoleMenu(!showRoleMenu)}
-              className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition-all shadow-xs"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#526157] bg-white border border-[#dce9df] rounded-lg hover:border-green-300 hover:bg-green-50/50 transition-all shadow-xs"
+              title="Switch demo persona for judges"
             >
-              <span className={`w-2 h-2 rounded-full ${activeSessionMode === 'user' ? 'bg-blue-600' : 'bg-emerald-500'}`} />
-              <span className="capitalize font-semibold text-slate-800">
-                {activeSessionMode === 'user' ? 'My Profile' : `${role} Mode`}
+              <span className={`w-2 h-2 rounded-full ${activeSessionMode === 'user' ? 'bg-green-600' : 'bg-emerald-500'}`} />
+              <span className="capitalize font-semibold text-[#17251b] hidden sm:inline">
+                {activeSessionMode === 'user' ? 'User Mode' : `${role} Demo`}
               </span>
               <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
             {showRoleMenu && (
-              <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute right-0 mt-2 w-72 bg-white border border-[#dce9df] rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="px-2 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-[#526157] uppercase tracking-wider">
                     Demo Mode Personas
                   </span>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-medium">
+                  <span className="text-[10px] text-green-800 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 font-medium">
                     SIH 2026
                   </span>
                 </div>
@@ -223,23 +307,23 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                     onClick={() => handleSelectRole(item.role, item.route)}
                     className={`w-full text-left flex items-start gap-2.5 p-2 rounded-lg transition-colors ${
                       role === item.role && activeSessionMode === 'demo'
-                        ? 'bg-blue-50 border border-blue-200 text-blue-900'
-                        : 'hover:bg-slate-50 text-slate-700'
+                        ? 'bg-green-50 border border-green-200 text-green-900'
+                        : 'hover:bg-green-50/60 text-[#17251b]'
                     }`}
                   >
-                    <div className="mt-0.5 p-1 rounded bg-slate-100 border border-slate-200">
+                    <div className="mt-0.5 p-1 rounded bg-[#f7fcf8] border border-[#dce9df]">
                       {item.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-xs text-slate-900">
+                        <span className="font-semibold text-xs text-[#17251b]">
                           {item.title}
                         </span>
                         {role === item.role && activeSessionMode === 'demo' && (
-                          <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                          <UserCheck className="w-3.5 h-3.5 text-green-600" />
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 truncate">
+                      <p className="text-[11px] text-[#526157] truncate">
                         {item.subtitle}
                       </p>
                     </div>
@@ -250,7 +334,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/resume-analyzer"
                     onClick={() => setShowRoleMenu(false)}
-                    className="text-[11px] text-blue-600 font-semibold hover:underline flex items-center gap-1"
+                    className="text-[11px] text-green-700 font-semibold hover:underline flex items-center gap-1"
                   >
                     <FileText className="w-3 h-3" />
                     <span>Upload Personal Resume</span>
@@ -260,11 +344,10 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                       resetDemoData();
                       setShowRoleMenu(false);
                     }}
-                    className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-red-600 transition-colors"
+                    className="text-[11px] text-slate-400 hover:text-red-600 transition-colors"
                     title="Reset to default seed state"
                   >
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Reset</span>
+                    Reset
                   </button>
                 </div>
               </div>

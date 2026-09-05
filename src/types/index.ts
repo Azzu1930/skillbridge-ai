@@ -320,3 +320,110 @@ export interface PersonalizedOpportunityMatch {
   whyMatched: string[];
   recommendedAction: string;
 }
+
+/* =========================================================================
+   Phase 4: User Accounts, Persistent Reports & Document Generation Types
+========================================================================= */
+
+export interface UserAccount {
+  id: string; // e.g. usr_1725512345678
+  fullName: string;
+  email: string;
+  passwordHash: string;
+  salt: string;
+  targetRole?: string;
+  institution?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthSession {
+  token: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  expiresAt: number;
+}
+
+export interface ResumeRecord {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileSize: string;
+  fileType: 'pdf' | 'docx' | 'txt';
+  uploadedAt: string;
+  rawText: string;
+  fileDataUrl?: string; // Stored Data URL to allow redownloading the original resume file
+}
+
+export interface CareerReport {
+  id: string; // e.g. rep_1725512345678
+  userId: string;
+  resumeId: string;
+  resumeRecordId?: string;
+  analysisId: string;
+  version: number;
+  generatedAt: string;
+  targetRole: string;
+  readinessScore: number;
+  scoreBreakdown: {
+    technicalSkills: number; // out of 50
+    projects: number; // out of 15
+    experience: number; // out of 10
+    certifications: number; // out of 10
+    assessment: number; // out of 15
+  };
+  candidateInfo: {
+    name: string;
+    email?: string;
+    phone?: string;
+    education: string;
+    degree?: string;
+    college?: string;
+    experienceYears: number;
+  };
+  resumeMeta: {
+    fileName: string;
+    fileSize: string;
+    fileType: 'pdf' | 'docx' | 'txt';
+    uploadedAt: string;
+  };
+  skills: ExtractedSkillItem[];
+  softSkills: string[];
+  tools: string[];
+  projects: {
+    title: string;
+    description: string;
+    skills: string[];
+  }[];
+  certifications: string[];
+  internships: {
+    role: string;
+    company: string;
+    duration?: string;
+  }[];
+  achievements: string[];
+  skillGaps: SkillGapItem[];
+  criticalGaps: SkillGapItem[];
+  moderateGaps: SkillGapItem[];
+  strongSkills: { name: string; score: number; target: number }[];
+  roadmap: RoadmapMilestone[];
+  opportunities: PersonalizedOpportunityMatch[];
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  actionPlan: string[];
+  status: 'completed' | 'generating';
+}
+
+export interface ReportComparisonResult {
+  reportA: CareerReport;
+  reportB: CareerReport;
+  readinessDelta: number;
+  newSkills: string[];
+  removedSkills: string[];
+  improvedSkills: { name: string; oldScore: number; newScore: number }[];
+  resolvedGaps: string[];
+  newGaps: string[];
+  opportunityMatchChange: number;
+}
