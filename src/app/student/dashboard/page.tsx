@@ -48,7 +48,7 @@ export default function StudentDashboardPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Good morning, {student.name.split(' ')[0]} 👋
+              Good morning, {(student?.name || 'Candidate').split(' ')[0]} 👋
             </h1>
             <p className="text-sm text-slate-600 mt-1">
               Your career readiness is improving. Target role:{' '}

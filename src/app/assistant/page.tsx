@@ -30,7 +30,7 @@ export default function AssistantPage() {
     {
       id: 'init_1',
       sender: 'assistant',
-      text: `Hello ${student.name.split(' ')[0]}! I am your **SkillBridge AI Career Advisor**.
+      text: `Hello ${(student?.name || 'Candidate').split(' ')[0]}! I am your **SkillBridge AI Career Advisor**.
 
 I have synchronized with your **AI Skill Twin** (Current Readiness: **${student.readinessScore}%**, Target: **${student.targetRole}**).
 

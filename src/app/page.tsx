@@ -33,10 +33,11 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const { setRole, setIsDemoTourOpen, setDemoTourStep, isAuthenticated, currentUser } = useApp();
+  const { setRole, setIsDemoTourOpen, setDemoTourStep, isAuthenticated, currentUser, setSessionMode } = useApp();
 
   const handleLaunchRole = (role: UserRole, targetRoute: string) => {
     setRole(role);
+    setSessionMode('demo');
     router.push(targetRoute);
   };
 

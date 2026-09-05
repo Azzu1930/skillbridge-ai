@@ -45,6 +45,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const pathname = usePathname();
+  const safePath = pathname || '';
   const router = useRouter();
 
   const demoRolesList: { role: UserRole; title: string; subtitle: string; icon: React.ReactNode; route: string }[] = [
@@ -132,7 +133,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
               <Link
                 href={userDashboardUrl}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
-                  pathname.includes('dashboard')
+                  safePath.includes('dashboard')
                     ? 'text-green-700 font-semibold bg-green-50'
                     : 'hover:text-[#17251b] hover:bg-green-50/60'
                 }`}
@@ -145,7 +146,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/student/skill-twin"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/skill-twin' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/student/skill-twin' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     My Skill Profile
@@ -153,7 +154,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/student/assessment"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/assessment' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/student/assessment' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Skill Assessments
@@ -161,7 +162,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/student/opportunities"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/opportunities' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/student/opportunities' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Opportunities
@@ -169,7 +170,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/student/applications"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/applications' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/student/applications' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     My Applications
@@ -177,7 +178,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/reports"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/reports' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/reports' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     My Reports
@@ -190,7 +191,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/faculty/collaborations"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/faculty/collaborations' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/faculty/collaborations' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Faculty Opportunities
@@ -198,7 +199,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/student/skill-gap"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/student/skill-gap' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/student/skill-gap' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Student Insights
@@ -211,7 +212,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/industry/post-opportunity"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/industry/post-opportunity' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/industry/post-opportunity' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Post Opportunity
@@ -219,7 +220,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/industry/candidates"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/industry/candidates' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/industry/candidates' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Candidate Matcher
@@ -227,7 +228,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/industry/demand"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/industry/demand' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/industry/demand' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Skill Demand
@@ -240,7 +241,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/institution/students"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/institution/students' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/institution/students' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Students
@@ -248,7 +249,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/admin/intelligence"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/admin/intelligence' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/admin/intelligence' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Skill Intelligence
@@ -256,7 +257,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   <Link
                     href="/admin/training"
                     className={`px-3 py-1.5 rounded-lg transition-colors ${
-                      pathname === '/admin/training' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                      safePath === '/admin/training' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                     }`}
                   >
                     Training Programs
@@ -270,7 +271,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
               <Link
                 href="/"
                 className={`px-2.5 py-1.5 rounded-lg transition-colors ${
-                  pathname === '/' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                  safePath === '/' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                 }`}
               >
                 Home
@@ -302,7 +303,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
               <Link
                 href="/student/opportunities"
                 className={`px-2.5 py-1.5 rounded-lg transition-colors ${
-                  pathname === '/student/opportunities' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
+                  safePath === '/student/opportunities' ? 'text-green-700 font-semibold bg-green-50' : 'hover:text-[#17251b] hover:bg-green-50/60'
                 }`}
               >
                 Opportunities
@@ -326,7 +327,7 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
         {/* Global Search trigger */}
         <div className="hidden xl:flex items-center max-w-xs mx-2">
           <button
-            onClick={onOpenSearch}
+            onClick={() => onOpenSearch?.()}
             className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-[#526157] bg-[#f7fcf8] border border-[#dce9df] rounded-lg hover:border-green-300 hover:text-[#17251b] transition-all shadow-xs"
           >
             <div className="flex items-center gap-2">
@@ -355,9 +356,9 @@ export function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
                   className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-[#17251b] bg-white border border-[#dce9df] rounded-lg hover:border-green-300 transition-all shadow-xs"
                 >
                   <div className="w-5 h-5 rounded-full bg-green-100 text-green-800 flex items-center justify-center font-bold text-[10px]">
-                    {currentUser.fullName.charAt(0).toUpperCase()}
+                    {(currentUser.fullName || 'User').charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-semibold max-w-[110px] truncate">{currentUser.fullName}</span>
+                  <span className="font-semibold max-w-[110px] truncate">{currentUser.fullName || 'User'}</span>
                   <ChevronDown className="w-3 h-3 text-slate-400" />
                 </button>
 

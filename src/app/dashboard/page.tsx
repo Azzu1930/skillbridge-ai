@@ -128,7 +128,7 @@ export default function UserDashboardPage() {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-textPrimary tracking-tight">
-                Welcome{currentUser ? `, ${candidateName.split(' ')[0]}` : ' to SkillBridge AI'} 👋
+                Welcome{currentUser ? `, ${(candidateName || 'User').split(' ')[0]}` : ' to SkillBridge AI'} 👋
               </h1>
               <p className="text-sm text-muted mt-1">
                 {isNewUser

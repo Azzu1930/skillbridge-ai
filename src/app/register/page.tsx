@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { UserRole } from '@/types';
@@ -25,16 +25,62 @@ import {
   Calendar,
 } from 'lucide-react';
 
+const ROLE_CONFIGS = [
+  {
+    id: 'student' as UserRole,
+    title: 'Student / Job Seeker',
+    shortTitle: 'Student',
+    icon: GraduationCap,
+    description: 'Build your verified Skill Twin, detect gaps, follow learning roadmaps, and apply for matched internships.',
+    color: 'green',
+  },
+  {
+    id: 'faculty' as UserRole,
+    title: 'Faculty / Educator',
+    shortTitle: 'Faculty',
+    icon: BookOpen,
+    description: 'Monitor department cohorts, view real-time skill gaps, guide student projects, and collaborate with industry.',
+    color: 'emerald',
+  },
+  {
+    id: 'industry' as UserRole,
+    title: 'Industry / Recruiter',
+    shortTitle: 'Industry',
+    icon: Building2,
+    description: 'Post jobs & internships, discover talent with transparent AI matching, and provide direct curriculum feedback.',
+    color: 'teal',
+  },
+  {
+    id: 'institution' as UserRole,
+    title: 'Institution / Admin',
+    shortTitle: 'Institution',
+    icon: Landmark,
+    description: 'Track university placement readiness, department benchmarks, and close the academia–industry intelligence loop.',
+    color: 'cyan',
+  },
+];
+
 function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialRole = (searchParams.get('role') as UserRole) || 'student';
-
   const { register } = useApp();
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>(
-    ['student', 'faculty', 'industry', 'institution'].includes(initialRole) ? initialRole : 'student'
-  );
+  const [selectedRole, setSelectedRole] = useState<UserRole>('student');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const roleParam = params.get('role') as UserRole;
+        if (roleParam && ['student', 'faculty', 'industry', 'institution'].includes(roleParam)) {
+          setSelectedRole(roleParam);
+        }
+      } catch {
+        // Silently fallback to student default
+      }
+    }
+  }, []);
+
+  const currentRoleCfg = ROLE_CONFIGS.find((r) => r.id === selectedRole) || ROLE_CONFIGS[0];
   const [step, setStep] = useState<'select-role' | 'fill-form'>('fill-form');
 
   // Shared Form State
@@ -116,7 +162,7 @@ function RegisterForm() {
         department: selectedRole === 'faculty' ? department : undefined,
         designation: selectedRole === 'faculty' ? designation : selectedRole === 'institution' ? adminDesignation : undefined,
         yearsOfExperience: selectedRole === 'faculty' ? parseInt(yearsOfExperience) || 5 : undefined,
-        areasOfExpertise: selectedRole === 'faculty' ? areasOfExpertise.split(',').map((s) => s.trim()) : undefined,
+        areasOfExpertise: selectedRole === 'faculty' ? (areasOfExpertise || '').split(',').map((s) => s.trim()).filter(Boolean) : undefined,
         // Industry
         companyName: selectedRole === 'industry' ? companyName : undefined,
         industrySector: selectedRole === 'industry' ? industrySector : undefined,
@@ -147,37 +193,6 @@ function RegisterForm() {
     }
   };
 
-  const roleConfigs = [
-    {
-      id: 'student' as UserRole,
-      title: 'Student / Job Seeker',
-      icon: GraduationCap,
-      description: 'Build your verified Skill Twin, detect gaps, follow learning roadmaps, and apply for matched internships.',
-      color: 'green',
-    },
-    {
-      id: 'faculty' as UserRole,
-      title: 'Faculty / Educator',
-      icon: BookOpen,
-      description: 'Monitor department cohorts, view real-time skill gaps, guide student projects, and collaborate with industry.',
-      color: 'emerald',
-    },
-    {
-      id: 'industry' as UserRole,
-      title: 'Industry / Recruiter',
-      icon: Building2,
-      description: 'Post jobs & internships, discover talent with transparent AI matching, and provide direct curriculum feedback.',
-      color: 'teal',
-    },
-    {
-      id: 'institution' as UserRole,
-      title: 'Institution / Admin',
-      icon: Landmark,
-      description: 'Track university placement readiness, department benchmarks, and close the academia–industry intelligence loop.',
-      color: 'cyan',
-    },
-  ];
-
   return (
     <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-2xl bg-white border border-borderGreen rounded-2xl shadow-card p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
@@ -200,7 +215,7 @@ function RegisterForm() {
             Select Your Role
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {roleConfigs.map((cfg) => {
+            {ROLE_CONFIGS.map((cfg) => {
               const Icon = cfg.icon;
               const isSelected = selectedRole === cfg.id;
               return (
@@ -250,7 +265,7 @@ function RegisterForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="border-t border-borderGreen pt-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted mb-3">
-              Account Credentials & Details ({roleConfigs.find((r) => r.id === selectedRole)?.title})
+              Account Credentials & Details ({currentRoleCfg.title})
             </h3>
           </div>
 
@@ -702,7 +717,7 @@ function RegisterForm() {
               <span>Creating Account...</span>
             ) : (
               <>
-                <span>Complete Registration ({roleConfigs.find((r) => r.id === selectedRole)?.title.split(' ')[0]})</span>
+                <span>Complete Registration ({currentRoleCfg.shortTitle})</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -725,9 +740,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#f7fcf8] text-textPrimary flex flex-col">
       <Navbar />
-      <Suspense fallback={<div className="flex-1 flex items-center justify-center p-8 text-xs text-muted">Loading registration portal...</div>}>
-        <RegisterForm />
-      </Suspense>
+      <RegisterForm />
     </div>
   );
 }

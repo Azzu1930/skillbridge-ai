@@ -40,6 +40,7 @@ interface SidebarLink {
 export function Sidebar() {
   const { role, student, activeSessionMode, isAuthenticated, currentUser } = useApp();
   const pathname = usePathname();
+  const safePath = pathname || '';
 
   // 1. Authenticated Student Links (Section 57)
   const studentAuthLinks: SidebarLink[] = [
@@ -207,7 +208,7 @@ export function Sidebar() {
       {/* Navigation List */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {links.map((link) => {
-          const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href.split('?')[0]) && link.href.length > 5);
+          const isActive = safePath === link.href || (link.href !== '/dashboard' && safePath.startsWith(link.href.split('?')[0]) && link.href.length > 5);
           const Icon = link.icon;
 
           return (

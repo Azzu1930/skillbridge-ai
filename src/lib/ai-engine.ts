@@ -466,7 +466,7 @@ Total: **87/100 (High Fit Recommendation)**.`;
   }
 
   // Fallback
-  return `Hello ${profile.name.split(' ')[0]}! I am your **SkillBridge Career Copilot**, grounded in your verified **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
+  return `Hello ${(profile?.name || 'User').split(' ')[0]}! I am your **SkillBridge Career Copilot**, grounded in your verified **Skill Twin** (Readiness: ${profile.readinessScore}%, Target: ${profile.targetRole}).
 
 You can ask me:
 - *"What skills am I missing for ${profile.targetRole}?"*

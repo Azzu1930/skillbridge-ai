@@ -1,8 +1,7 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useApp } from '@/context/AppContext';
 import { CareerReport, ResumeAnalysisResult } from '@/types';
@@ -30,8 +29,20 @@ import {
 import { getUserResumeRecord, getUserReportById, createCareerReportFromAnalysis } from '@/lib/report-storage';
 
 function ReportViewContent() {
-  const searchParams = useSearchParams();
-  const reportId = searchParams.get('id');
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        setReportId(params.get('id'));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   const {
     currentUser,
@@ -41,6 +52,14 @@ function ReportViewContent() {
   } = useApp();
 
   const [downloadingDocx, setDownloadingDocx] = useState(false);
+
+  if (!isMounted) {
+    return (
+      <div className="p-12 text-center text-muted">
+        <p className="text-xs">Loading Career Intelligence Report...</p>
+      </div>
+    );
+  }
 
   // Authorization and Report Resolution:
   let resolvedReport: CareerReport | null = null;
@@ -716,9 +735,7 @@ function ReportViewContent() {
 export default function ReportViewPage() {
   return (
     <AppShell>
-      <Suspense fallback={<div className="p-12 text-center text-muted">Loading Career Intelligence Report...</div>}>
-        <ReportViewContent />
-      </Suspense>
+      <ReportViewContent />
     </AppShell>
   );
 }
